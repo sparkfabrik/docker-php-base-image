@@ -1,6 +1,6 @@
 FROM php:5.6.19-apache
 MAINTAINER paolo.mainardi@sparkfabrik.com
-ENV REFRESHED_AT 2016-03-11
+ENV REFRESHED_AT 2016-03-14
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -12,7 +12,8 @@ ENV XDEBUG_VERSION 2.4.0
 ENV DRUSH_VERSION 8.0.5
 ENV VAR_DUMPER_VERSION 3.0.3
 ENV GOSU_VERSION 1.7
-ENV MAILHOG_VERSION v0.1.8
+ENV MAILHOG_VERSION v0.1.9
+ENV TIMEZONE "Europe/Rome"
 
 # Install php packages.
 RUN apt-get update \
@@ -38,6 +39,8 @@ RUN apt-get update \
   && docker-php-ext-configure intl \
   && docker-php-ext-configure pcntl \
   && docker-php-ext-install soap gd mbstring pdo pdo_mysql zip intl pcntl \
+  && echo "${TIMEZONE}" > /etc/timezone \
+  && dpkg-reconfigure -f noninteractive tzdata \
   && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -59,23 +62,17 @@ RUN mkdir /composer-libs \
 RUN curl -fSL "https://github.com/mailhog/MailHog/releases/download/${MAILHOG_VERSION}/MailHog_linux_amd64" -o /usr/local/bin/mailhog \
     && chmod +x /usr/local/bin/mailhog
 
-# Install ngrok.
-ADD https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip /ngrok.zip
-RUN unzip /ngrok.zip -d /bin && \
- rm -f ngrok.zip && \
- touch /.ngrok
-
 ## Configure PHP and Apache and supervisord.
-COPY ../config/docker/php/*.ini /usr/local/etc/php/conf.d/
-COPY ../config/docker/apache/*.conf /etc/apache2/conf-enabled/
-COPY ..(config/docker/supervisord/*.conf /etc/supervisor/conf.d/
+COPY config/docker/php/*.ini /usr/local/etc/php/conf.d/
+COPY config/docker/apache/*.conf /etc/apache2/conf-enabled/
+COPY config/docker/supervisord/*.conf /etc/supervisor/conf.d/
 RUN mkdir -p /usr/local/etc/php/apache2 && \
     cp -R /usr/local/etc/php/conf.d /usr/local/etc/php/apache2 && \
     echo 'export PHP_INI_SCAN_DIR=/usr/local/etc/php/apache2/conf.d' >> /etc/apache2/envvars && \
     echo 'stage:$apr1$g6T0GvU3$6cxYQhCZvI.1aEFYr1uOd/' > /var/www/.htpasswd
 
 # Configure cron.
-COPY ../config/docker/cron/crontab /etc/cron.d/cron
+COPY config/docker/cron/crontab /etc/cron.d/cron
 RUN rm -Rf /etc/cron.daily  && \
     rm -Rf /etc/cron.weekly && \
     rm -Rf /etc/cron.monthly && \
@@ -88,6 +85,12 @@ RUN export VERSION=`php -r "echo PHP_MAJOR_VERSION.PHP_MINOR_VERSION;"` \
     && tar zxpf /tmp/blackfire-probe.tar.gz -C /tmp \
     && mv /tmp/blackfire-*.so `php -r "echo ini_get('extension_dir');"`/blackfire.so \
     && echo "extension=blackfire.so\nblackfire.agent_socket=\${BLACKFIRE_PORT}" > $PHP_INI_DIR/apache2/conf.d/blackfire.ini
+
+# Install ngrok.
+ADD https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip /ngrok.zip
+RUN unzip /ngrok.zip -d /bin && \
+ rm -f ngrok.zip && \
+ touch /.ngrok
 
 # Expose apache.
 EXPOSE 80
