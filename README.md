@@ -14,6 +14,8 @@
 * pcntl
 * xdebug (not activated by default)
 
+Password protected pages: `htpasswd: stage/stage`
+
 ### Tools
 
 * XDEBUG 2.4.0
