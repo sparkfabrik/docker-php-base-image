@@ -49,7 +49,7 @@ ENV COMPOSER_HOME /composer-libs
 RUN mkdir /composer-libs \
     && curl -sS https://getcomposer.org/installer | php \
     && mv composer.phar /usr/local/bin/composer \
-    && composer global require symfony/var-dumper:$VAR_DUMPER_VERSION \
+    && composer global require symfony/var-dumper:${VAR_DUMPER_VERSION} \
     && chown -R www-data:www-data /composer-libs \
     && curl -fSL "https://github.com/drush-ops/drush/releases/download/${DRUSH_VERSION}/drush.phar" -o /usr/bin/drush \
     && chmod +x /usr/bin/drush \
