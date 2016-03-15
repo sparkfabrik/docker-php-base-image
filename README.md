@@ -23,6 +23,7 @@
 * MAILHOG v0.1.9
 * BLACKFIRE (latest)
 * NGROK (latest)
+* Ruby 2.1
 
 ### Supervisord
 
