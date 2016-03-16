@@ -14,6 +14,8 @@
 * pcntl
 * xdebug (not activated by default)
 
+Password protected pages: `htpasswd: stage/stage`
+
 ### Tools
 
 * XDEBUG 2.4.0
@@ -23,6 +25,7 @@
 * MAILHOG v0.1.9
 * BLACKFIRE (latest)
 * NGROK (latest)
+* Ruby 2.1
 
 ### Supervisord
 
@@ -50,7 +53,7 @@ The example above will execute `drush cron` every 30 minutes.
 
 #### Apache
 
-Everything is routed to `stdout`, you can use "docker logs -f <container-id>" to see apache logs.
+Everything is routed to `stdout`, you can use `docker logs -f <container-id>` or `docker-compose logs <container-name>` to see apache logs.
 
 ```
 ErrorLog /dev/stdout
