@@ -1,4 +1,4 @@
-FROM FROM sparkfabrik/php:5.5.9-apache
+FROM sparkfabrik/php:5.5.9-apache
 MAINTAINER paolo.mainardi@sparkfabrik.com
 ENV REFRESHED_AT 2016-04-20
 
