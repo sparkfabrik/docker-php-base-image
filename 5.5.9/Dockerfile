@@ -1,4 +1,4 @@
-FROM sparkfabrik/docker-php-base-image:5.5.9
+FROM FROM sparkfabrik/php:5.5.9
 MAINTAINER paolo.mainardi@sparkfabrik.com
 ENV REFRESHED_AT 2016-04-20
 
