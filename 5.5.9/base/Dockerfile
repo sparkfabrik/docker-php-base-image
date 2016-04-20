@@ -44,7 +44,8 @@ ENV GPG_KEYS 0B96609E270F565C13292B24C13C70B87267B52D 0BD78B5F97500D450838F95DFE
 
 ENV PHP_VERSION 5.5.9
 ENV PHP_FILENAME php-5.5.9.tar.xz
-ENV PHP_SHA256 ec1bf0cb3be80240049dbd92c272d4bf242a614fa5f9dcc42a15adb5fd01ccde
+ENV PHP_SHA256 7f7a7b1189472e59b234233daab9aa9692bb5eb8404485e9a78221f75ee4664a
+ENV PHP_MD5 139e2ac02fddd4c80cc31de000c6f7e3
 
 RUN set -xe \
 	&& buildDeps=" \
@@ -58,7 +59,7 @@ RUN set -xe \
 	" \
 	&& apt-get update && apt-get install -y $buildDeps --no-install-recommends && rm -rf /var/lib/apt/lists/* \
 	&& curl -fSL "http://php.net/get/$PHP_FILENAME/from/this/mirror" -o "$PHP_FILENAME" \
-	#&& echo "$PHP_SHA256 *$PHP_FILENAME" | sha256sum -c - \
+	&& echo "$PHP_MD5 *$PHP_FILENAME" | md5sum -c - \
 	&& curl -fSL "http://php.net/get/$PHP_FILENAME.asc/from/this/mirror" -o "$PHP_FILENAME.asc" \
 	&& export GNUPGHOME="$(mktemp -d)" \
 	&& for key in $GPG_KEYS; do \

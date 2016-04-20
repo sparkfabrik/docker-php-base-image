@@ -1,6 +1,6 @@
-FROM php:5.6.19-apache
+FROM sparkfabrik/docker-php-base-image:5.5.9
 MAINTAINER paolo.mainardi@sparkfabrik.com
-ENV REFRESHED_AT 2016-03-14
+ENV REFRESHED_AT 2016-04-20
 
 ENV DEBIAN_FRONTEND noninteractive
 
