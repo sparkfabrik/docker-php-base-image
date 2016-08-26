@@ -53,6 +53,7 @@ RUN mkdir /composer-libs \
     && chown -R www-data:www-data /composer-libs \
     && curl -fSL "https://github.com/drush-ops/drush/releases/download/${DRUSH_VERSION}/drush.phar" -o /usr/bin/drush \
     && chmod +x /usr/bin/drush \
+    && drush @none dl registry_rebuild-7.x-2.3 \
     && echo "PS1='\[\033[1;36m\]\u\[\033[1;31m\]@\[\033[1;32m\]\h:\[\033[1;35m\]\w\[\033[1;31m\]\$\[\033[0m\] '" >> /etc/bash.bashrc \
     && echo "export TERM=xterm" >> /etc/bash.bashrc \
     && echo "umask 000" >> /etc/bash.bashrc \
