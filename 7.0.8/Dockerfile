@@ -70,7 +70,8 @@ COPY config/docker/supervisord/*.conf /etc/supervisor/conf.d/
 RUN mkdir -p /usr/local/etc/php/apache2 && \
     cp -R /usr/local/etc/php/conf.d /usr/local/etc/php/apache2 && \
     echo 'export PHP_INI_SCAN_DIR=/usr/local/etc/php/apache2/conf.d' >> /etc/apache2/envvars && \
-    echo 'stage:$apr1$g6T0GvU3$6cxYQhCZvI.1aEFYr1uOd/' > /var/www/.htpasswd
+    echo 'stage:$apr1$g6T0GvU3$6cxYQhCZvI.1aEFYr1uOd/' > /var/www/.htpasswd && \
+    rm -rf /etc/apache2/sites-enabled/*
 
 # Configure cron.
 COPY config/docker/cron/crontab /etc/cron.d/cron
