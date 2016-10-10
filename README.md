@@ -1,5 +1,7 @@
 # Docker PHP base images
 
+[![](https://images.microbadger.com/badges/image/sparkfabrik/docker-php-base-image.svg)](https://microbadger.com/images/sparkfabrik/docker-php-base-image "Get your own image badge on microbadger.com")
+
 ## Packages
 
 ### PHP Modules

@@ -53,6 +53,7 @@ RUN mkdir /composer-libs \
     && chown -R www-data:www-data /composer-libs \
     && curl -fSL "https://github.com/drush-ops/drush/releases/download/${DRUSH_VERSION}/drush.phar" -o /usr/bin/drush \
     && chmod +x /usr/bin/drush \
+    && drush @none dl registry_rebuild-7.x-2.3 \
     && echo "PS1='\[\033[1;36m\]\u\[\033[1;31m\]@\[\033[1;32m\]\h:\[\033[1;35m\]\w\[\033[1;31m\]\$\[\033[0m\] '" >> /etc/bash.bashrc \
     && echo "export TERM=xterm" >> /etc/bash.bashrc \
     && echo "umask 000" >> /etc/bash.bashrc \
@@ -69,7 +70,8 @@ COPY config/docker/supervisord/*.conf /etc/supervisor/conf.d/
 RUN mkdir -p /usr/local/etc/php/apache2 && \
     cp -R /usr/local/etc/php/conf.d /usr/local/etc/php/apache2 && \
     echo 'export PHP_INI_SCAN_DIR=/usr/local/etc/php/apache2/conf.d' >> /etc/apache2/envvars && \
-    echo 'stage:$apr1$g6T0GvU3$6cxYQhCZvI.1aEFYr1uOd/' > /var/www/.htpasswd
+    echo 'stage:$apr1$g6T0GvU3$6cxYQhCZvI.1aEFYr1uOd/' > /var/www/.htpasswd && \
+    rm -rf /etc/apache2/sites-enabled/*
 
 # Configure cron.
 COPY config/docker/cron/crontab /etc/cron.d/cron
