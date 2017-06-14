@@ -33,6 +33,7 @@ RUN apt-get update \
   unzip \
   vim \
   libicu-dev \
+  libssl-dev \
   && gem install bundler \
   && pecl install xdebug-${XDEBUG_VERSION} \
   && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
