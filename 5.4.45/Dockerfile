@@ -10,7 +10,7 @@ RUN a2enmod rewrite
 # System env variables.
 ENV XDEBUG_VERSION 2.4.0
 ENV DRUSH_VERSION 8.0.5
-ENV VAR_DUMPER_VERSION 3.0.3
+ENV VAR_DUMPER_VERSION 2.8.22
 ENV GOSU_VERSION 1.7
 ENV MAILHOG_VERSION v0.1.9
 ENV TIMEZONE "Europe/Rome"
@@ -27,19 +27,15 @@ RUN apt-get update \
   libjpeg-dev \
   libxml2-dev \
   ruby \
-  ruby2.1 \
-  ruby2.1-dev\
   git \
   unzip \
   vim \
   libicu-dev \
   libssl-dev \
-  && gem install bundler \
-  && pecl install xdebug-${XDEBUG_VERSION} \
-  && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
-  && docker-php-ext-configure intl \
-  && docker-php-ext-configure pcntl \
-  && docker-php-ext-install soap gd mbstring pdo pdo_mysql zip intl pcntl \
+  php5-gd \
+  php5-intl \
+  php5-mysql \
+  php5-xdebug \
   && echo "${TIMEZONE}" > /etc/timezone \
   && dpkg-reconfigure -f noninteractive tzdata \
   && apt-get autoremove -y \
@@ -74,6 +70,13 @@ RUN mkdir -p /usr/local/etc/php/apache2 && \
     echo 'stage:$apr1$g6T0GvU3$6cxYQhCZvI.1aEFYr1uOd/' > /var/www/.htpasswd && \
     rm -rf /etc/apache2/sites-enabled/*
 
+# Upgrade ruby. 
+RUN curl -L get.rvm.io | bash -s stable \
+&& /bin/bash -l -c "rvm install 2.1.0" \
+&& /bin/bash -l -c "rvm use 2.1.0 --default" \
+&& echo "source /etc/profile.d/rvm.sh" >> /root/.bashrc \
+&& gem install bundler --no-rdoc
+
 # Configure cron.
 COPY config/docker/cron/crontab /etc/cron.d/cron
 RUN rm -Rf /etc/cron.daily  && \
@@ -86,8 +89,8 @@ RUN rm -Rf /etc/cron.daily  && \
 RUN export VERSION=`php -r "echo PHP_MAJOR_VERSION.PHP_MINOR_VERSION;"` \
     && curl -A "Docker" -o /tmp/blackfire-probe.tar.gz -D - -L -s https://blackfire.io/api/v1/releases/probe/php/linux/amd64/${VERSION} \
     && tar zxpf /tmp/blackfire-probe.tar.gz -C /tmp \
-    && mv /tmp/blackfire-*.so `php -r "echo ini_get('extension_dir');"`/blackfire.so \
-    && echo "extension=blackfire.so\nblackfire.agent_socket=\${BLACKFIRE_PORT}" > $PHP_INI_DIR/apache2/conf.d/blackfire.ini
+    && mv /tmp/blackfire-*.so `php -r "echo ini_get('extension_dir');"`/blackfire.so \ 
+    && echo "extension=blackfire.so\nblackfire.agent_socket=\${BLACKFIRE_PORT}" > /etc/php5/apache2/conf.d/blackfire.ini
 
 # Install ngrok.
 ADD https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip /ngrok.zip
