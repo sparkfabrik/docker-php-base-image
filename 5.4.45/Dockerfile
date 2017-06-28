@@ -40,10 +40,8 @@ RUN apt-get update \
     && echo "${TIMEZONE}" > /etc/timezone \
     && dpkg-reconfigure -f noninteractive tzdata \
     && apt-get autoremove -y \
+    && pecl install memcache-3.0.6 \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Install memcache.
-RUN pecl install memcache-3.0.6
 
 # Install composer, drush and other tools.
 ENV COMPOSER_HOME /composer-libs
