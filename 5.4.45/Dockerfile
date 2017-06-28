@@ -16,30 +16,32 @@ ENV MAILHOG_VERSION v0.1.9
 ENV TIMEZONE "Europe/Rome"
 
 # Install php packages.
-RUN apt-get update \
-  && apt-get install -y \
-  curl \
-  cron \
-  rsyslog \
-  supervisor \
-  mysql-client \
-  libpng12-dev \
-  libjpeg-dev \
-  libxml2-dev \
-  ruby \
-  git \
-  unzip \
-  vim \
-  libicu-dev \
-  libssl-dev \
-  php5-gd \
-  php5-intl \
-  php5-mysql \
-  php5-xdebug \
-  && echo "${TIMEZONE}" > /etc/timezone \
-  && dpkg-reconfigure -f noninteractive tzdata \
-  && apt-get autoremove -y \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN pecl install memcache-3.0.6 \
+    && apt-get update \
+    && apt-get install -y \
+    curl \
+    cron \
+    rsyslog \
+    supervisor \
+    mysql-client \
+    libpng12-dev \
+    libjpeg-dev \
+    libxml2-dev \
+    ruby \
+    git \
+    unzip \
+    vim \
+    libicu-dev \
+    libssl-dev \
+    php5-gd \
+    php5-intl \
+    php5-mysql \
+    php5-xdebug \
+    php5-memcached \
+    && echo "${TIMEZONE}" > /etc/timezone \
+    && dpkg-reconfigure -f noninteractive tzdata \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install composer, drush and other tools.
 ENV COMPOSER_HOME /composer-libs
@@ -60,7 +62,7 @@ RUN mkdir /composer-libs \
 RUN curl -fSL "https://github.com/mailhog/MailHog/releases/download/${MAILHOG_VERSION}/MailHog_linux_amd64" -o /usr/local/bin/mailhog \
     && chmod +x /usr/local/bin/mailhog
 
-## Configure PHP and Apache and supervisord.
+## Configure PHP, Apache, Memcache and supervisord.
 COPY config/docker/php/*.ini /usr/local/etc/php/conf.d/
 COPY config/docker/apache/*.conf /etc/apache2/conf-enabled/
 COPY config/docker/supervisord/*.conf /etc/supervisor/conf.d/
