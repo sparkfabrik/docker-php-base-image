@@ -16,8 +16,7 @@ ENV MAILHOG_VERSION v0.1.9
 ENV TIMEZONE "Europe/Rome"
 
 # Install php packages.
-RUN pecl install memcache-3.0.6 \
-    && apt-get update \
+RUN apt-get update \
     && apt-get install -y \
     curl \
     cron \
@@ -42,6 +41,9 @@ RUN pecl install memcache-3.0.6 \
     && dpkg-reconfigure -f noninteractive tzdata \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install memcache.
+RUN pecl install memcache-3.0.6
 
 # Install composer, drush and other tools.
 ENV COMPOSER_HOME /composer-libs
