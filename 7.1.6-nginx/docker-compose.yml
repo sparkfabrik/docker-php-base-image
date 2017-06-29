@@ -1,0 +1,7 @@
+drupal:
+  build: .
+  dockerfile: Dockerfile
+
+  environment:
+    - DNSDOCK_ALIAS=www.test.sparkfabrik.loc
+    - ENV_TYPE=LOC
