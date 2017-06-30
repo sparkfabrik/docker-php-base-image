@@ -66,13 +66,10 @@ RUN curl -fSL "https://github.com/mailhog/MailHog/releases/download/${MAILHOG_VE
 COPY config/docker/php/*.ini /etc/php5/conf.d/
 COPY config/docker/apache/*.conf /etc/apache2/conf-enabled/
 COPY config/docker/supervisord/*.conf /etc/supervisor/conf.d/
-RUN mkdir -p /usr/local/etc/php/apache2 && \
-    cp -R /usr/local/etc/php/conf.d /usr/local/etc/php/apache2 && \
-    echo 'export PHP_INI_SCAN_DIR=/usr/local/etc/php/apache2/conf.d' >> /etc/apache2/envvars && \
-    echo 'stage:$apr1$g6T0GvU3$6cxYQhCZvI.1aEFYr1uOd/' > /var/www/.htpasswd && \
+RUN echo 'stage:$apr1$g6T0GvU3$6cxYQhCZvI.1aEFYr1uOd/' > /var/www/.htpasswd && \
     rm -rf /etc/apache2/sites-enabled/*
 
-# Upgrade ruby. 
+# Upgrade ruby.
 RUN curl -L get.rvm.io | bash -s stable \
 && /bin/bash -l -c "rvm install 2.1.0" \
 && /bin/bash -l -c "rvm use 2.1.0 --default" \
@@ -91,7 +88,7 @@ RUN rm -Rf /etc/cron.daily  && \
 RUN export VERSION=`php -r "echo PHP_MAJOR_VERSION.PHP_MINOR_VERSION;"` \
     && curl -A "Docker" -o /tmp/blackfire-probe.tar.gz -D - -L -s https://blackfire.io/api/v1/releases/probe/php/linux/amd64/${VERSION} \
     && tar zxpf /tmp/blackfire-probe.tar.gz -C /tmp \
-    && mv /tmp/blackfire-*.so `php -r "echo ini_get('extension_dir');"`/blackfire.so \ 
+    && mv /tmp/blackfire-*.so `php -r "echo ini_get('extension_dir');"`/blackfire.so \
     && echo "extension=blackfire.so\nblackfire.agent_socket=\${BLACKFIRE_PORT}" > /etc/php5/apache2/conf.d/blackfire.ini
 
 # Install ngrok.
