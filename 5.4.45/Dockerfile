@@ -63,7 +63,7 @@ RUN curl -fSL "https://github.com/mailhog/MailHog/releases/download/${MAILHOG_VE
     && chmod +x /usr/local/bin/mailhog
 
 ## Configure PHP, Apache, Memcache and supervisord.
-COPY config/docker/php/*.ini /usr/local/etc/php/conf.d/
+COPY config/docker/php/*.ini /etc/php5/conf.d/
 COPY config/docker/apache/*.conf /etc/apache2/conf-enabled/
 COPY config/docker/supervisord/*.conf /etc/supervisor/conf.d/
 RUN mkdir -p /usr/local/etc/php/apache2 && \
