@@ -83,12 +83,13 @@ RUN rm -Rf /etc/cron.daily  && \
     chmod a+x /etc/cron.d/cron
 
 # Install blackfire agent.
+ENV PHP_INI_DIR /etc/php/7.0/mods-available
 RUN export VERSION=`php -r "echo PHP_MAJOR_VERSION.PHP_MINOR_VERSION;"` \
     && curl -A "Docker" -o /tmp/blackfire-probe.tar.gz -D - -L -s https://blackfire.io/api/v1/releases/probe/php/linux/amd64/${VERSION} \
     && tar zxpf /tmp/blackfire-probe.tar.gz -C /tmp \
     && mv /tmp/blackfire-*.so `php -r "echo ini_get('extension_dir');"`/blackfire.so \
-    && echo "extension=blackfire.so\nblackfire.agent_socket=\${BLACKFIRE_PORT}" > $PHP_INI_DIR/apache2/conf.d/blackfire.ini
-
+    && echo "extension=blackfire.so\nblackfire.agent_socket=tcp://blackfire:8707" > $PHP_INI_DIR/blackfire.ini \
+    && phpenmod blackfire
 # Install ngrok.
 ADD https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip /ngrok.zip
 RUN unzip /ngrok.zip -d /bin && \
