@@ -8,7 +8,7 @@ RUN apk update && \
     docker-php-ext-install soap gd mbstring pdo pdo_mysql zip intl pcntl && \
     pecl install xdebug-${XDEBUG_VERSION} && \
     pecl install igbinary memcached-${MEMCACHE_VERSION} --disable-memcached-sasl && \
-    apk del ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} && \
+    apk del ${PHPIZE_DEPS} && \
     mkdir -p /tmp/blackfire && \
     curl -A "Docker" -L https://blackfire.io/api/v1/releases/client/linux_static/amd64 | tar zxp -C /tmp/blackfire && \
     mv /tmp/blackfire/blackfire /usr/bin/blackfire && \
