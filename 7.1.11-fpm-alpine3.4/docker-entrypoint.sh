@@ -16,21 +16,21 @@ export MAILHOG_PORT=${MAILHOG_PORT:-1025}
 if [ "${MEMCACHED_ENABLE}" = "1" ]; then
 	cp /usr/local/etc/php/conf.disabled/memcached.ini /usr/local/etc/php/conf.d/memcached.ini
 else
-	rm /usr/local/etc/php/conf.d/memcached.ini
+	rm -f /usr/local/etc/php/conf.d/memcached.ini || true
 fi
 
 if [ "${MAILHOG_ENABLE}" = "1" ]; then
 	cp /usr/local/etc/php/conf.disabled/mailhog.ini /usr/local/etc/php/conf.d/mailhog.ini
 else
-	rm /usr/local/etc/php/conf.d/mailhog.ini
+	rm -f /usr/local/etc/php/conf.d/mailhog.ini || true
 fi
 
 if [ "${XDEBUG_ENABLE}" = "1" ]; then
 	cp /usr/local/etc/php/conf.disabled/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
 else
-	rm /usr/local/etc/php/conf.d/xdebug.ini
+	rm -f /usr/local/etc/php/conf.d/xdebug.ini || true
 fi
 
-exec php-fpm
+exec "$@"
 
 
