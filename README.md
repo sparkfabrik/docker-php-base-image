@@ -40,7 +40,7 @@ Running processes:
 * rsyslogd
 * cron
 
-### Cron
+### Cron
 
 The cron expect a file inside `/etc/cron.d/cron` like this:
 
@@ -62,15 +62,12 @@ ErrorLog /dev/stdout
 CustomLog /dev/stdout combined
 ```
 
-### PHP
+### PHP
 
 PHP is configured through "docker.ini" to write errors to a log file, located at "/tmp/php.err.log".
 You can read them by using the following command: `docker exec -it <container-id> tail -F /tmp/php.err.log`
 
 
-### Timezone
+### Timezone
 
 Europe/Rome (yay!)
-
-
-
