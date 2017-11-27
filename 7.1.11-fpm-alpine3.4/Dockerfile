@@ -2,9 +2,10 @@ FROM php:7.1.11-fpm-alpine3.4
 
 ENV XDEBUG_VERSION 2.5.5
 ENV MEMCACHE_VERSION 3.0.3
-ENV PHP_EXTRA_DEPS libxml2-dev libpng-dev icu-dev libmemcached-dev cyrus-sasl-dev
+ENV PHP_EXTRA_DEPS libxml2-dev libpng-dev libjpeg-dev icu-dev libmemcached-dev cyrus-sasl-dev
 RUN apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} && \
+    docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr && \
     docker-php-ext-install soap gd mbstring pdo pdo_mysql zip intl pcntl && \
     pecl install xdebug-${XDEBUG_VERSION} && \
     pecl install igbinary memcached-${MEMCACHE_VERSION} --disable-memcached-sasl && \
