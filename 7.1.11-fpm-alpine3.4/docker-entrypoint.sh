@@ -31,6 +31,9 @@ else
 	rm -f /usr/local/etc/php/conf.d/xdebug.ini || true
 fi
 
+# php-fpm template env subst.
+envsubst < /templates/zz2-docker-custom.conf > /usr/local/etc/php-fpm.d/zz2-docker-custom.conf
+
 exec "$@"
 
 
