@@ -11,7 +11,7 @@ ENV PHP_FPM_START_SERVERS 2
 ENV PHP_FPM_MIN_SPARE_SERVERS 1
 ENV PHP_FPM_MAX_SPARE_SERVERS 3
 
-ENV XDEBUG_VERSION 2.6.0alpha1
+ENV XDEBUG_VERSION 2.5.5
 ENV MEMCACHE_VERSION 3.0.4
 ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev
 RUN apk update && \
