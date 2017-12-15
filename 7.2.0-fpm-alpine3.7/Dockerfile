@@ -13,6 +13,7 @@ ENV PHP_FPM_MAX_SPARE_SERVERS 3
 
 ENV XDEBUG_VERSION 2.6.0alpha1
 ENV MEMCACHE_VERSION 3.0.4
+ENV PHPREDIS_VERSION 3.1.4
 ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev
 RUN apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} && \
@@ -20,6 +21,7 @@ RUN apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} gettext && \
     docker-php-ext-install soap gd mbstring pdo pdo_mysql zip intl pcntl && \
     pecl install xdebug-${XDEBUG_VERSION} && \
+    pecl install redis-${PHPREDIS_VERSION} && \
     pecl install igbinary memcached-${MEMCACHE_VERSION} --disable-memcached-sasl && \
     apk del ${PHPIZE_DEPS} && \
     mkdir -p /tmp/blackfire && \
