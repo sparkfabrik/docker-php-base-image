@@ -26,7 +26,6 @@ else
 	rm -f /usr/local/etc/php/conf.d/redis.ini || true
 fi
 
-
 if [ "${MAILHOG_ENABLE}" = "1" ]; then
 	cp /usr/local/etc/php/conf.disabled/mailhog.ini /usr/local/etc/php/conf.d/mailhog.ini
 else

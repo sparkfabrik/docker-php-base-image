@@ -7,6 +7,7 @@ export PHP_OPCACHE_MEMORY=${PHP_OPCACHE_MEMORY:-64}
 # Services.
 export MAILHOG_ENABLE=${MAILHOG_ENABLE:-1}
 export MEMCACHED_ENABLE=${MEMCACHED_ENABLE:-0}
+export REDIS_ENABLE=${REDIS_ENABLE:-0}
 export XDEBUG_ENABLE=${XDEBUG_ENABLE:-0}
 
 # Services configurations.
@@ -17,6 +18,12 @@ if [ "${MEMCACHED_ENABLE}" = "1" ]; then
 	cp /usr/local/etc/php/conf.disabled/memcached.ini /usr/local/etc/php/conf.d/memcached.ini
 else
 	rm -f /usr/local/etc/php/conf.d/memcached.ini || true
+fi
+
+if [ "${REDIS_ENABLE}" = "1" ]; then
+	cp /usr/local/etc/php/conf.disabled/redis.ini /usr/local/etc/php/conf.d/redis.ini
+else
+	rm -f /usr/local/etc/php/conf.d/redis.ini || true
 fi
 
 if [ "${MAILHOG_ENABLE}" = "1" ]; then
