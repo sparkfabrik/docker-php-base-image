@@ -6,6 +6,7 @@ ENV PHP_TIMEZONE=Europe/Rome
 ENV PHP_REALPATH_CACHE_SIZE 2M
 ENV PHP_UPLOAD_MAX_FILE_SIZE 32M
 ENV PHP_POST_MAX_SIZE 32M
+ENV BLACKFIRE_HOST=${BLACKFIRE_HOST:-blackfire}
 
 # FPM Configurations.
 ENV PHP_FPM_MAX_CHILDREN 5
@@ -36,7 +37,7 @@ RUN apk update && \
 ENV BLACKFIRE_VERSION 1.18.0
 RUN curl -A "Docker" -o /tmp/blackfire-php-alpine_amd64-php-71-zts.so -D - -L -s https://packages.blackfire.io/binaries/blackfire-php/1.18.0/blackfire-php-alpine_amd64-php-71.so \
     && mv /tmp/blackfire-*.so $(php -r "echo ini_get('extension_dir');")/blackfire.so \
-    && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://blackfire:8707\n" > $PHP_INI_DIR/conf.d/blackfire.ini
+    && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://\${BLACKFIRE_HOST}:8707\n" > $PHP_INI_DIR/conf.d/blackfire.ini
 
 ## Configure PHP.
 COPY conf/*.ini /usr/local/etc/php/conf.d/
