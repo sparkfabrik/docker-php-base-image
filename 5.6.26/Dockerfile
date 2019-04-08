@@ -15,6 +15,10 @@ ENV GOSU_VERSION 1.7
 ENV MAILHOG_VERSION v0.1.9
 ENV TIMEZONE "Europe/Rome"
 
+# Update apt sources @see https://lists.debian.org/debian-devel-announce/2019/03/msg00006.html
+COPY config/docker/jessie/apt/sources.list /etc/apt/sources.list
+COPY config/docker/jessie/apt/apt.conf.d/check-valid-until.conf /etc/apt/apt.conf.d/check-valid-until.conf
+
 # Install php packages.
 RUN apt-get update \
   && apt-get install -y \
