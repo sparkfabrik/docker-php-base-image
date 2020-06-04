@@ -1,4 +1,4 @@
-FROM php:7.4-fpm-alpine3.10
+FROM php:7.4.6-fpm-alpine3.10
 
 # Default php configurations values.
 ENV PHP_MEMORY_LIMIT 64M
