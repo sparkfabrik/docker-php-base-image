@@ -5,7 +5,6 @@ on:
     # Publish `master` as Docker `latest` image.
     branches:
       - master
-      - feature/push-to-ghcr
 
 env:
   IMAGE_NAME: docker-php-base-image
