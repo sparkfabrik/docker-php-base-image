@@ -17,8 +17,8 @@ jobs:
 
     strategy:
       matrix:
-        #tag: [5.4.45, 5.5.9, 5.6.19, 5.6.26, 7.0.6, 7.0.8, 7.0.20, 7.0.33, 7.1.11-fpm-alpine3.4, 7.1.12-fpm-alpine3.4, 7.1.22-fpm-alpine3.8, 7.1.29-fpm-alpine3.9, 7.1.6, 7.2.0-fpm-alpine3.7, 7.2.25-fpm-alpine3.10, 7.3.24-fpm-alpine3.12, 7.4.6-fpm-alpine3.10]
-        tag: [5.6.26, 7.0.33, 7.1.11-fpm-alpine3.4, 7.1.12-fpm-alpine3.4, 7.1.22-fpm-alpine3.8, 7.1.29-fpm-alpine3.9, 7.2.0-fpm-alpine3.7, 7.2.25-fpm-alpine3.10, 7.3.24-fpm-alpine3.12, 7.4.6-fpm-alpine3.10]
+        tag: [5.4.45, 5.5.9, 5.6.19, 5.6.26, 7.0.6, 7.0.8, 7.0.20, 7.0.33, 7.1.11-fpm-alpine3.4, 7.1.12-fpm-alpine3.4, 7.1.22-fpm-alpine3.8, 7.1.29-fpm-alpine3.9, 7.1.6, 7.2.0-fpm-alpine3.7, 7.2.25-fpm-alpine3.10, 7.3.24-fpm-alpine3.12, 7.4.6-fpm-alpine3.10]
+        #tag: [5.6.26, 7.0.33, 7.1.11-fpm-alpine3.4, 7.1.12-fpm-alpine3.4, 7.1.22-fpm-alpine3.8, 7.1.29-fpm-alpine3.9, 7.2.0-fpm-alpine3.7, 7.2.25-fpm-alpine3.10, 7.3.24-fpm-alpine3.12, 7.4.6-fpm-alpine3.10]
     steps:
       - uses: actions/checkout@v2
 
@@ -26,7 +26,7 @@ jobs:
         run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build image
-        run: docker build . --file ${{ matrix.tag }}/Dockerfile --tag $IMAGE_NAME:${{ matrix.tag }}
+        run: docker build ./${{ matrix.tag }} --file ${{ matrix.tag }}/Dockerfile --tag $IMAGE_NAME:${{ matrix.tag }}
       - name: Push images to GitHub Container Registry
         run: |
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
