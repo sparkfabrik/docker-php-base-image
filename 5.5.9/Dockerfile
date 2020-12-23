@@ -1,4 +1,4 @@
-FROM sparkfabrik/php:5.5.9-apache
+FROM ghcr.io/sparkfabrik/php:5.5.9-apache
 MAINTAINER paolo.mainardi@sparkfabrik.com
 ENV REFRESHED_AT 2016-04-20
 
@@ -34,7 +34,7 @@ RUN apt-get update \
   vim \
   libicu-dev \
   libssl-dev \
-  && gem install bundler \
+  && gem install bundler -v 1.17.3 \
   && pecl install xdebug-${XDEBUG_VERSION} \
   && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
   && docker-php-ext-configure intl \
