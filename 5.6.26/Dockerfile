@@ -43,7 +43,7 @@ RUN apt-get update \
   && docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
   && docker-php-ext-configure intl \
   && docker-php-ext-configure pcntl \
-  && docker-php-ext-install soap gd mbstring pdo pdo_mysql zip intl pcntl \
+  && docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip \
   && echo "${TIMEZONE}" > /etc/timezone \
   && dpkg-reconfigure -f noninteractive tzdata \
   && apt-get autoremove -y \
