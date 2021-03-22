@@ -32,6 +32,7 @@ RUN apt-get update \
     vim \
     libicu-dev \
     libssl-dev \
+    php5-bcmath \
     php5-gd \
     php5-intl \
     php5-mysql \

@@ -24,7 +24,7 @@ RUN apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} && \
     docker-php-ext-configure gd --with-gd --with-freetype-dir=/usr/include/ --with-png-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} gettext && \
-    docker-php-ext-install soap gd mbstring pdo pdo_mysql zip intl pcntl && \
+    docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip && \
     pecl install xdebug-${XDEBUG_VERSION} && \
     pecl install redis-${PHPREDIS_VERSION} && \
     pecl install igbinary memcached-${MEMCACHE_VERSION} --disable-memcached-sasl && \

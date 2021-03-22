@@ -6,15 +6,17 @@
 
 ### PHP Modules
 
-* soap
+* bcmath
 * gd
+* intl
 * mbstring
+* pcntl
 * pdo
 * pdo_mysql
-* zip
-* intl
-* pcntl
+* soap
 * xdebug (not activated by default)
+* zip
+
 
 Password protected pages: `htpasswd: stage/stage`
 
