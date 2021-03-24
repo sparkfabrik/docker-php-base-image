@@ -1,0 +1,32 @@
+name: Image testing
+on:
+  push:
+    branches-ignore:
+      - master
+
+env:
+  IMAGE_NAME: docker-php-base-image
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        build-target:
+          [
+            build-7-4-16-rootless,
+            build-7-4-6,
+            build-7-3-24,
+            build-7.2.25,
+            build-7-2-0,
+            build-7-1-29,
+            build-7-1-22,
+            build-7-1-12,
+            build-7-1-11,
+          ]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build and test the image
+        run: make ${{ matrix.build-target }}
