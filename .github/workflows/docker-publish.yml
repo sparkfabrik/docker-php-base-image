@@ -6,7 +6,6 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         build-target:
@@ -27,16 +26,10 @@ jobs:
       - name: Build and test the image
         run: make ${{ matrix.build-target }}
 
-  push:
-    on:
-      push:
-        # Publish `master` as Docker `latest` image.
-        branches:
-          - master
-    
+  deploy:
+    needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-
+    if: github.ref == 'refs/heads/master' 
     strategy:
       matrix:
         tag:
