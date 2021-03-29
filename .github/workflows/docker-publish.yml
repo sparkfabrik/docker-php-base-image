@@ -1,4 +1,5 @@
 name: Docker
+on: push
 
 env:
   IMAGE_NAME: docker-php-base-image
