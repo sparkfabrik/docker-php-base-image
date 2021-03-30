@@ -1,5 +1,7 @@
 FROM php:7.4.16-fpm-alpine3.13
 
+ARG user=root
+
 # Default php configurations values.
 ENV PHP_MEMORY_LIMIT 64M
 ENV PHP_TIMEZONE=Europe/Rome
@@ -39,19 +41,19 @@ ENV MAILHOG_VERSION v0.1.9
 RUN curl -fSL "https://github.com/mailhog/MailHog/releases/download/${MAILHOG_VERSION}/MailHog_linux_amd64" -o /usr/local/bin/mailhog \
     && chmod +x /usr/local/bin/mailhog
 
-## Configure entrypoint.
+# Configure entrypoint.
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh && \
-    chown -R www-data:www-data /usr/local/etc/php && \
-    chown -R www-data:www-data /usr/local/etc/php-fpm.d
+    chown -R $user:$user /usr/local/etc/php && \
+    chown -R $user:$user /usr/local/etc/php-fpm.d
 
-## Configure PHP.
-COPY --chown=www-data:www-data conf/*.ini /usr/local/etc/php/conf.d/
-COPY --chown=www-data:www-data conf.disabled /usr/local/etc/php/conf.disabled
-COPY --chown=www-data:www-data fpm-conf-templates/ /templates/
+# Configure PHP.
+COPY --chown=$user:$user conf/*.ini /usr/local/etc/php/conf.d/
+COPY --chown=$user:$user conf.disabled /usr/local/etc/php/conf.disabled
+COPY --chown=$user:$user fpm-conf-templates/ /templates/
 
-# Drop root privileges
-USER www-data
+# Go to target user
+USER $user
 
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD ["php-fpm"]

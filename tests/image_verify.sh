@@ -32,6 +32,8 @@ ENV_FILE=""
 
 SOURCE_FILE=""
 
+TEST_USER=""
+
 CUR_TEST_VAR=""
 CUR_TEST_VAL=""
 
@@ -48,6 +50,10 @@ printf "%-${PAD}s %s\n" "DOCKER_IMAGE" "${DOCKER_IMAGE}"
 printf "%-${PAD}s %s\n" "ENV_LIST" "${ENV_LIST}"
 printf "%-${PAD}s %s\n" "ENV_FILE" "${ENV_FILE}"
 printf "%-${PAD}s %s\n" "SOURCE_FILE" "${SOURCE_FILE}"
+
+if [ -n "${TEST_USER}" ]; then
+    printf "%-${PAD}s %s\n" "CONTAINER_USER" "${TEST_USER}"
+fi
 
 cat <<EOM
 
@@ -73,6 +79,7 @@ Options:
                                         the container image (these variables will override the --env defined ones)
     --fpm-port N                        Defines the PHP-FPM port, if missing the default 9000 port is used
     --source PATH                       Defines a path for a file which includes the desired expectations
+    --user,-u STRING                    Defines the default user for the image
 EOM
 }
 
@@ -104,6 +111,7 @@ while [ -n "${1}" ]; do
         --env-file) ENV_FILE="${2}"; if [ ! -f "${ENV_FILE}" ]; then exit 3; fi; shift 2 ;;
         --fpm-port) DOCKER_TEST_PORT="${2}"; shift 2 ;;
         --source) SOURCE_FILE="${2}"; if [ ! -f "${SOURCE_FILE}" ]; then exit 2; fi; shift 2 ;;
+        --user|-u) TEST_USER="${2}"; shift 2 ;;
         -*|--*=) echo "Error: Unsupported flag $1" >&2; exit 1 ;;
         *) PARAMS="$PARAMS $1"; shift ;;
     esac
@@ -184,6 +192,34 @@ test_for_module() {
     return $LOC_EXIT_STATUS
 }
 
+test_for_user() {
+    LOC_EXIT_STATUS=5
+    if [ -n "${CONTAINER_ID}" ] && [ -n "${CUR_TEST_VAL}" ]; then
+        TEST_USER=""
+        LOC_EXIT_STATUS=0
+        TEST_PASSED=1
+        CONTAINER_VAL=$(docker exec ${CONTAINER_ID} ash -c "whoami")
+
+        if [ "${CONTAINER_VAL}" != "${CUR_TEST_VAL}" ]; then
+            TEST_PASSED=0
+            LOC_EXIT_STATUS=6
+        fi
+
+        [ $TEST_PASSED -eq 1 ] && TEST_PASSED_STR="\e[32mOK\e[39m" || TEST_PASSED_STR="\e[31mFAIL\e[39m"
+        echo "Testing the expectation for USER: ${TEST_PASSED_STR}"
+        if [ $TEST_PASSED -ne 1 ]; then
+            echo "Expected: ${CUR_TEST_VAL} - Actual value: ${CONTAINER_VAL}"
+            echo ""
+        fi
+    fi
+    
+    if [ $LOC_EXIT_STATUS -ne 0 ] && [ $LOC_EXIT_STATUS -gt $EXIT_STATUS ]; then
+        EXIT_STATUS=$LOC_EXIT_STATUS
+    fi
+
+    return $LOC_EXIT_STATUS
+}
+
 if [ -z "$(docker images -q ${DOCKER_IMAGE})" ]; then
     echo "Failed to find the docker image"
     exit 7
@@ -248,6 +284,8 @@ for line in $(grep -v '^#' ${SOURCE_FILE}); do
                 echo "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is module test"
             fi
             test_for_module
+        elif [ "${CUR_TEST_VAR}" = "CONTAINER_USER" ]; then
+            test_for_user
         else
             if [ $DEBUG -eq 1 ]; then
                 echo "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is ini test"
@@ -256,6 +294,11 @@ for line in $(grep -v '^#' ${SOURCE_FILE}); do
         fi
     fi
 done
+
+if [ -n "${TEST_USER}" ]; then
+    CUR_TEST_VAL="${TEST_USER}"
+    test_for_user
+fi
 
 if [ $DEBUG -eq 1 ]; then
     echo "Docker stop command: docker stop ${CONTAINER_ID} >/dev/null 2>&1"
