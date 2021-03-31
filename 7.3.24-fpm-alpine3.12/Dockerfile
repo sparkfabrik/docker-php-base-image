@@ -1,6 +1,7 @@
 FROM php:7.3.24-fpm-alpine3.12
 
 ARG user=root
+ARG group=root
 
 # Default php configurations values.
 ENV PHP_MEMORY_LIMIT 64M
@@ -44,13 +45,13 @@ RUN curl -fSL "https://github.com/mailhog/MailHog/releases/download/${MAILHOG_VE
 # Configure entrypoint.
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh && \
-    chown -R $user:$user /usr/local/etc/php && \
-    chown -R $user:$user /usr/local/etc/php-fpm.d
+    chown -R $user:$group /usr/local/etc/php && \
+    chown -R $user:$group /usr/local/etc/php-fpm.d
 
 # Configure PHP.
-COPY --chown=$user:$user conf/*.ini /usr/local/etc/php/conf.d/
-COPY --chown=$user:$user conf.disabled /usr/local/etc/php/conf.disabled
-COPY --chown=$user:$user fpm-conf-templates/ /templates/
+COPY --chown=$user:$group conf/*.ini /usr/local/etc/php/conf.d/
+COPY --chown=$user:$group conf.disabled /usr/local/etc/php/conf.disabled
+COPY --chown=$user:$group fpm-conf-templates/ /templates/
 
 # Go to target user
 USER $user

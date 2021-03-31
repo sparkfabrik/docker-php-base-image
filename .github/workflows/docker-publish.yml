@@ -19,7 +19,7 @@ jobs:
             build-7-1-29,
             build-7-1-22,
             build-7-1-12,
-            build-7-1-11
+            build-7-1-11,
           ]
     steps:
       - uses: actions/checkout@v2
@@ -51,7 +51,7 @@ jobs:
             7.2.25-fpm-alpine3.10,
             7.3.24-fpm-alpine3.12,
             7.4.6-fpm-alpine3.10,
-            7.4.16-fpm-alpine3.13
+            7.4.16-fpm-alpine3.13,
           ]
     steps:
       - uses: actions/checkout@v2
@@ -87,7 +87,7 @@ jobs:
             build-7-1-29-rootless,
             build-7-1-22-rootless,
             build-7-1-12-rootless,
-            build-7-1-11-rootless
+            build-7-1-11-rootless,
           ]
     steps:
       - uses: actions/checkout@v2
@@ -111,7 +111,7 @@ jobs:
             7.2.25-fpm-alpine3.10,
             7.3.24-fpm-alpine3.12,
             7.4.6-fpm-alpine3.10,
-            7.4.16-fpm-alpine3.13
+            7.4.16-fpm-alpine3.13,
           ]
     steps:
       - uses: actions/checkout@v2
@@ -123,7 +123,7 @@ jobs:
         run: test -d ${{ matrix.tag }} && test -f ${{ matrix.tag }}/Dockerfile.rootless
 
       - name: Build image
-        run: docker build ./${{ matrix.tag }} --build-arg user=www-data --tag $IMAGE_NAME:${{ matrix.tag }}-rootless
+        run: docker build ./${{ matrix.tag }} --build-arg user=www-data --build-arg group=www-data --tag $IMAGE_NAME:${{ matrix.tag }}-rootless
       - name: Push images to GitHub Container Registry
         run: |
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
