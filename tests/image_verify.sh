@@ -198,7 +198,7 @@ test_for_user() {
         TEST_USER=""
         LOC_EXIT_STATUS=0
         TEST_PASSED=1
-        CONTAINER_VAL=$(docker exec ${CONTAINER_ID} ash -c "whoami")
+        CONTAINER_VAL=$(docker exec ${CONTAINER_ID} ash -c "whoami 2>&1 | sed 's/whoami: //'")
 
         if [ "${CONTAINER_VAL}" != "${CUR_TEST_VAL}" ]; then
             TEST_PASSED=0

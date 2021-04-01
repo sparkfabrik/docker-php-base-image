@@ -16,7 +16,7 @@ if [ -n "${1}" ] && [ -d "${BASE}/expectations/${1}" ] && [ -n "${2}" ]; then
 
   ${BASE}/image_verify.sh \
 			--source ${BASE}/expectations/${1}/expectations_default \
-      --user ${USER} \
+      --user "${USER}" \
 		${2}
   
   if [ $? -ne 0 ]; then
@@ -26,7 +26,7 @@ if [ -n "${1}" ] && [ -d "${BASE}/expectations/${1}" ] && [ -n "${2}" ]; then
 	${BASE}/image_verify.sh \
 			--source ${BASE}/expectations/${1}/expectations_overrides \
 			--env-file ${BASE}/expectations/${1}/image_env_overrides \
-      --user ${USER} \
+      --user "${USER}" \
 		${2}
   
   if [ $? -ne 0 ]; then

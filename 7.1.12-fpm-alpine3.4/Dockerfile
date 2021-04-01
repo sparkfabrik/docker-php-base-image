@@ -1,7 +1,7 @@
 FROM php:7.1.12-fpm-alpine3.4
 
+# Pass inexistent UUID (e.g.: 1001) to enhance the container security
 ARG user=root
-ARG group=root
 
 # Default php configurations values.
 ENV PHP_MEMORY_LIMIT 64M
@@ -51,14 +51,18 @@ RUN curl -fSL "https://github.com/mailhog/MailHog/releases/download/${MAILHOG_VE
 
 # Configure entrypoint.
 COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh && \
-    chown -R $user:$group /usr/local/etc/php && \
-    chown -R $user:$group /usr/local/etc/php-fpm.d
+RUN chmod +x /docker-entrypoint.sh
 
 # Configure PHP.
-COPY --chown=$user:$group conf/*.ini /usr/local/etc/php/conf.d/
-COPY --chown=$user:$group conf.disabled /usr/local/etc/php/conf.disabled
-COPY --chown=$user:$group fpm-conf-templates/ /templates/
+COPY conf/*.ini /usr/local/etc/php/conf.d/
+COPY conf.disabled /usr/local/etc/php/conf.disabled
+COPY fpm-conf-templates/ /templates/
+
+# Make folders writable for the root group
+RUN chmod 775 /usr/local/etc/php && \
+    chmod 775 /usr/local/etc/php/conf.d && \
+    chmod 775 /usr/local/etc/php-fpm.d && \
+    chmod 775 /templates
 
 # Go to target user
 USER $user
