@@ -1,75 +1,73 @@
 # Docker PHP base images
 
-[![](https://images.microbadger.com/badges/image/sparkfabrik/docker-php-base-image.svg)](https://microbadger.com/images/sparkfabrik/docker-php-base-image "Get your own image badge on microbadger.com")
+[![](https://images.microbadger.com/badges/image/sparkfabrik/docker-php-base-image.svg)](https://microbadger.com/images/sparkfabrik/docker-php-base-image 'Get your own image badge on microbadger.com')
 
 ## Packages
 
 ### PHP Modules
 
-* bcmath
-* gd
-* intl
-* mbstring
-* pcntl
-* pdo
-* pdo_mysql
-* soap
-* xdebug (not activated by default)
-* zip
-
-
-Password protected pages: `htpasswd: stage/stage`
+- bcmath
+- gd
+- intl
+- mbstring
+- memcached (not activated by default)
+- pcntl
+- pdo
+- pdo_mysql
+- redis (not activated by default)
+- soap
+- xdebug (not activated by default)
+- zip
 
 ### Tools
 
-* XDEBUG 2.4.0
-* DRUSH 8.0.5
-* VAR_DUMPER 3.0.3
-* GOSU 1.7
-* MAILHOG v0.1.9
-* BLACKFIRE (latest)
-* NGROK (latest)
-* Ruby 2.1
+- XDEBUG 2.9.0
+- MAILHOG v0.1.9
+- BLACKFIRE (latest)
 
-### Supervisord
+## Env variables
 
-This container is a multi-process container, handled by supervisord.
-Configuration file `config/docker/supervisord/supervisord.conf`
+The entrypoint file contains a list of environment variables that will be replaced in the configuration files.
 
-Running processes:
+### Base PHP configuration
 
-* apache
-* rsyslogd
-* cron
+- `PHP_MEMORY_LIMIT`: maximum amount of memory in bytes that a script is allowed to allocate (default `128M`)
+- `PHP_TIMEZONE`: timezone used by all date/time functions in a script (default `Europe/Rome`)
+- `PHP_OPCACHE_ENABLE`: enable the opcode cache (default `1`)
+- `PHP_OPCACHE_MEMORY`: the size of the shared memory storage used by OPcache, in megabytes (default `64`)
 
-### Cron
+### Services
 
-The cron expect a file inside `/etc/cron.d/cron` like this:
+- `REDIS_ENABLE`: enable redis extension (default `0`)
+- `MEMCACHED_ENABLE`: enable memcached extension (default `0`)
+- `XDEBUG_ENABLE`: enable xdebug extension (default `0`; you need to set `XDEBUG_REMOTE_HOST` env variable also)
+- `MAILHOG_ENABLE`: change the default `sendmail_path` with the `mailhog` command (default `0`)
 
+### Services configurations
+
+- `MAILHOG_HOST`: mailhog smtp address (default `mail`)
+- `MAILHOG_PORT`: mailhog smtp port (default `1025`)
+
+## Rootless feature
+
+You can use `build-arg` to specify a `user` argument different from `root` to build the image with this feature.
+If you provide a non-root user the container will drop its privileges targeting the specified user.
+We have inserted the specific make targets with dedicated image suffix tags (`-rootless`) for these flavours.
+
+You can find some more information [here](https://docs.bitnami.com/tutorials/work-with-non-root-containers/).
+
+## Tests
+
+In the `tests` folder you can find the `image_verify.sh` script which is used to perform the end-to-end tests of the images.
+The script accepts a file as input (`--source`) which is used to configure the expectations.
+The expectations are defined by `key-value pairs` like the example below:
+
+```bash
+PHP_MEMORY_LIMIT="64M"
+PHP_TIMEZONE="Europe/Rome"
+MODULE_REDIS_ENABLE="1"
+MODULE_MEMCACHED_ENABLE="0"
 ```
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-*/30 * * * * root cd /var/www/html && bin/drush cron >/dev/null 2>&1
-```
 
-The example above will execute `drush cron` every 30 minutes.
-
-### Logs
-
-#### Apache
-
-Everything is routed to `stdout`, you can use `docker logs -f <container-id>` or `docker-compose logs <container-name>` to see apache logs.
-
-```
-ErrorLog /dev/stdout
-CustomLog /dev/stdout combined
-```
-
-### PHP
-
-PHP is configured through "docker.ini" to write errors to a log file, located at "/tmp/php.err.log".
-You can read them by using the following command: `docker exec -it <container-id> tail -F /tmp/php.err.log`
-
-
-### Timezone
-
-Europe/Rome (yay!)
+You can also test the which user the container was launched with by using the `--user` input.
+If you build the image with a non existent user you can test it with the string `unknown uid ${UUID}`.
