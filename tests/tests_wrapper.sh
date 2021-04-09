@@ -19,8 +19,10 @@ if [ -n "${1}" ] && [ -d "${BASE}/expectations/${1}" ] && [ -n "${2}" ]; then
       --user "${USER}" \
 		${2}
   
-  if [ $? -ne 0 ]; then
-    exit $?
+  EXIT_STATUS=$?
+
+  if [ $EXIT_STATUS -ne 0 ]; then
+    exit $EXIT_STATUS
   fi
   
 	${BASE}/image_verify.sh \
@@ -29,11 +31,8 @@ if [ -n "${1}" ] && [ -d "${BASE}/expectations/${1}" ] && [ -n "${2}" ]; then
       --user "${USER}" \
 		${2}
   
-  if [ $? -ne 0 ]; then
-    exit $?
-  fi
-
-  exit 0
+  EXIT_STATUS=$?
+  exit $EXIT_STATUS
 fi
 
 exit 99
