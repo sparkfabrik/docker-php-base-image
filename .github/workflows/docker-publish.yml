@@ -1,27 +1,66 @@
 name: Docker
-
-on:
-  push:
-    # Publish `master` as Docker `latest` image.
-    branches:
-      - master
+on: push
 
 env:
   IMAGE_NAME: docker-php-base-image
 
 jobs:
-  push:
+  test:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-
     strategy:
       matrix:
-        tag: [5.5.9, 5.6.19, 5.6.26, 7.0.6, 7.0.8, 7.0.20, 7.0.33, 7.1.11-fpm-alpine3.4, 7.1.12-fpm-alpine3.4, 7.1.22-fpm-alpine3.8, 7.1.29-fpm-alpine3.9, 7.1.6, 7.2.0-fpm-alpine3.7, 7.2.25-fpm-alpine3.10, 7.3.24-fpm-alpine3.12, 7.4.6-fpm-alpine3.10]
+        build-target:
+          [
+            build-7-4-16,
+            build-7-4-6,
+            build-7-3-24,
+            build-7.2.25,
+            build-7-2-0,
+            build-7-1-29,
+            build-7-1-22,
+            build-7-1-12,
+            build-7-1-11
+          ]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build and test the image
+        run: make ${{ matrix.build-target }}
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    strategy:
+      matrix:
+        tag:
+          [
+            5.5.9,
+            5.6.19,
+            5.6.26,
+            7.0.6,
+            7.0.8,
+            7.0.20,
+            7.0.33,
+            7.1.11-fpm-alpine3.4,
+            7.1.12-fpm-alpine3.4,
+            7.1.22-fpm-alpine3.8,
+            7.1.29-fpm-alpine3.9,
+            7.1.6,
+            7.2.0-fpm-alpine3.7,
+            7.2.25-fpm-alpine3.10,
+            7.3.24-fpm-alpine3.12,
+            7.4.6-fpm-alpine3.10,
+            7.4.16-fpm-alpine3.13
+          ]
     steps:
       - uses: actions/checkout@v2
 
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Check directory and Dockerfile
+        run: test -d ${{ matrix.tag }} && test -f ${{ matrix.tag }}/Dockerfile
 
       - name: Build image
         run: docker build ./${{ matrix.tag }} --file ${{ matrix.tag }}/Dockerfile --tag $IMAGE_NAME:${{ matrix.tag }}
@@ -33,3 +72,63 @@ jobs:
           echo IMAGE_ID=$IMAGE_ID
           docker tag $IMAGE_NAME:${{ matrix.tag }} $IMAGE_ID:${{ matrix.tag }}
           docker push $IMAGE_ID:${{ matrix.tag }}
+
+  test-rootless:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build-target:
+          [
+            build-7-4-16-rootless,
+            build-7-4-6-rootless,
+            build-7-3-24-rootless,
+            build-7.2.25-rootless,
+            build-7-2-0-rootless,
+            build-7-1-29-rootless,
+            build-7-1-22-rootless,
+            build-7-1-12-rootless,
+            build-7-1-11-rootless
+          ]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build and test the image
+        run: make ${{ matrix.build-target }}
+
+  deploy-rootless:
+    needs: test-rootless
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    strategy:
+      matrix:
+        tag:
+          [
+            7.1.11-fpm-alpine3.4,
+            7.1.12-fpm-alpine3.4,
+            7.1.22-fpm-alpine3.8,
+            7.1.29-fpm-alpine3.9,
+            7.2.0-fpm-alpine3.7,
+            7.2.25-fpm-alpine3.10,
+            7.3.24-fpm-alpine3.12,
+            7.4.6-fpm-alpine3.10,
+            7.4.16-fpm-alpine3.13
+          ]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Log into GitHub Container Registry
+        run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Check directory and Dockerfile
+        run: test -d ${{ matrix.tag }} && test -f ${{ matrix.tag }}/Dockerfile
+
+      - name: Build image
+        run: docker build ./${{ matrix.tag }} --build-arg user=1001 --tag $IMAGE_NAME:${{ matrix.tag }}-rootless
+      - name: Push images to GitHub Container Registry
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+          # Change all uppercase to lowercase.
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          echo IMAGE_ID=$IMAGE_ID
+          docker tag $IMAGE_NAME:${{ matrix.tag }}-rootless $IMAGE_ID:${{ matrix.tag }}-rootless
+          docker push $IMAGE_ID:${{ matrix.tag }}-rootless
