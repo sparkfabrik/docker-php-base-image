@@ -38,9 +38,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Build multi-platform
-        run: docker buildx build --output "type=image,push=false" ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --tag $IMAGE_NAME:${{ matrix.tag }}
-        
       - name: Test image
         run: make ${{ matrix.tag }}
 
@@ -117,12 +114,13 @@ jobs:
           ]
     steps:
       - uses: actions/checkout@v2
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Build multi-platform
-        run: docker buildx build --output "type=image,push=false" ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --tag $IMAGE_NAME:${{ matrix.tag }}
+
       - name: Build and test the image
         run: make ${{ matrix.tag }}
 
