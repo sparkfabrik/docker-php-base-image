@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build-target:
+        tag:
           [
             build-7-4-20,
             build-7-4-16,
@@ -32,8 +32,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build and test the image
-        run: make ${{ matrix.build-target }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build multi-platform
+        run: docker buildx build --output "type=image,push=false" ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --tag $IMAGE_NAME:${{ matrix.tag }}
+        
+      - name: Test image
+        run: make ${{ matrix.tag }}
 
   deploy:
     needs: test
@@ -71,8 +80,15 @@ jobs:
       - name: Check directory and Dockerfile
         run: test -d ${{ matrix.tag }} && test -f ${{ matrix.tag }}/Dockerfile
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
       - name: Build image
-        run: docker build ./${{ matrix.tag }} --file ${{ matrix.tag }}/Dockerfile --tag $IMAGE_NAME:${{ matrix.tag }}
+        run: docker buildx build --output "type=image,push=false" ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --tag $IMAGE_NAME:${{ matrix.tag }}
+        
       - name: Push images to GitHub Container Registry
         run: |
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
@@ -80,13 +96,13 @@ jobs:
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           echo IMAGE_ID=$IMAGE_ID
           docker tag $IMAGE_NAME:${{ matrix.tag }} $IMAGE_ID:${{ matrix.tag }}
-          docker push $IMAGE_ID:${{ matrix.tag }}
-
+          docker buildx build --output "type=image,push=true" $IMAGE_ID:${{ matrix.tag }}
+  
   test-rootless:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build-target:
+        tag:
           [
             build-7-4-20-rootless,
             build-7-4-16-rootless,
@@ -101,9 +117,14 @@ jobs:
           ]
     steps:
       - uses: actions/checkout@v2
-
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Build multi-platform
+        run: docker buildx build --output "type=image,push=false" ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --tag $IMAGE_NAME:${{ matrix.tag }}
       - name: Build and test the image
-        run: make ${{ matrix.build-target }}
+        run: make ${{ matrix.tag }}
 
   deploy-rootless:
     needs: test-rootless
@@ -133,8 +154,15 @@ jobs:
       - name: Check directory and Dockerfile
         run: test -d ${{ matrix.tag }} && test -f ${{ matrix.tag }}/Dockerfile
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
       - name: Build image
-        run: docker build ./${{ matrix.tag }} --build-arg user=1001 --tag $IMAGE_NAME:${{ matrix.tag }}-rootless
+        run: docker buildx build --output "type=image,push=false" ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --build-arg user=1001 --tag $IMAGE_NAME:${{ matrix.tag }}-rootless
+
       - name: Push images to GitHub Container Registry
         run: |
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
@@ -142,4 +170,4 @@ jobs:
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           echo IMAGE_ID=$IMAGE_ID
           docker tag $IMAGE_NAME:${{ matrix.tag }}-rootless $IMAGE_ID:${{ matrix.tag }}-rootless
-          docker push $IMAGE_ID:${{ matrix.tag }}-rootless
+          docker buildx build --output "type=image,push=true" $IMAGE_ID:${{ matrix.tag }}-rootless
