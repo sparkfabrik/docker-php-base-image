@@ -39,7 +39,7 @@ RUN apk update && \
     rm -rf /var/cache/apk/*
 
 # Install blackfire probe.
-ENV BLACKFIRE_VERSION 1.18.0
+ENV BLACKFIRE_VERSION 1.49.0
 RUN curl -A "Docker" -o /tmp/blackfire-php-alpine_amd64-php-71-zts.so -D - -L -s https://packages.blackfire.io/binaries/blackfire-php/1.18.0/blackfire-php-alpine_amd64-php-71.so \
     && mv /tmp/blackfire-*.so $(php -r "echo ini_get('extension_dir');")/blackfire.so \
     && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://\${BLACKFIRE_HOST}:8707\n" > $PHP_INI_DIR/conf.d/blackfire.ini
