@@ -24,6 +24,7 @@ DOCKER_TEST_IP=""
 DOCKER_TEST_PORT=9000
 DOCKER_TEST_INI=""
 DOCKER_TEST_EXT=""
+DOCKER_TEST_EXT_FUNCS=""
 
 DOCKER_IMAGE=""
 DOCKER_ENV=""
@@ -192,6 +193,34 @@ test_for_module() {
     return $LOC_EXIT_STATUS
 }
 
+test_for_function() {
+    LOC_EXIT_STATUS=5
+    if [ -n "${CUR_TEST_VAR}" ] && [ -n "${CUR_TEST_VAL}" ]; then
+        LOC_EXIT_STATUS=0
+        TEST_PASSED=1
+        CONTAINER_VAL=$(echo "${DOCKER_TEST_EXT_FUNCS}" | tail -n +4 | jq --raw-output ".${CUR_TEST_VAL}" | grep "${CUR_TEST_VAR}" | awk '{gsub(/"/,""); gsub(/,/,""); print $1}')
+        
+        
+        if [ "${CONTAINER_VAL}" != "${CUR_TEST_VAR}" ]; then
+            TEST_PASSED=0
+            LOC_EXIT_STATUS=6
+        fi
+
+        [ $TEST_PASSED -eq 1 ] && TEST_PASSED_STR="\e[32mOK\e[39m" || TEST_PASSED_STR="\e[31mFAIL\e[39m"
+        echo "Testing the expectation for function ${CUR_TEST_VAR} in module ${CUR_TEST_VAL}: ${TEST_PASSED_STR}"
+        if [ $TEST_PASSED -ne 1 ]; then
+            echo "Expected: ${CUR_TEST_VAR} - Actual value: ${CONTAINER_VAL}"
+            echo ""
+        fi
+    fi
+    
+    if [ $LOC_EXIT_STATUS -ne 0 ] && [ $LOC_EXIT_STATUS -gt $EXIT_STATUS ]; then
+        EXIT_STATUS=$LOC_EXIT_STATUS
+    fi
+
+    return $LOC_EXIT_STATUS
+}
+
 test_for_user() {
     LOC_EXIT_STATUS=5
     if [ -n "${CONTAINER_ID}" ] && [ -n "${CUR_TEST_VAL}" ]; then
@@ -273,6 +302,15 @@ if [ $? -ne 0 ]; then
     exit 12
 fi
 
+if [ $DEBUG -eq 1 ]; then
+    echo "Get the EXT FUNCTIONS output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_functions_ext.php"
+fi
+DOCKER_TEST_EXT_FUNCS=$(docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_functions_ext.php)
+if [ $? -ne 0 ]; then
+    echo "Failed to get the extensions data"
+    exit 12
+fi
+
 for line in $(grep -v '^#' ${SOURCE_FILE}); do
     if [ -n "${line}" ]; then
         CUR_TEST_VAR=$(echo "${line}" | awk '{split($0,a,"="); print a[1]}')
@@ -284,6 +322,12 @@ for line in $(grep -v '^#' ${SOURCE_FILE}); do
                 echo "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is module test"
             fi
             test_for_module
+        elif [ "$(echo ${CUR_TEST_VAR} | awk '$0 ~ /^FUNCTION_/ {print 1}')" = "1" ]; then
+            CUR_TEST_VAR=$(echo "${CUR_TEST_VAR}" | awk '{gsub(/(FUNCTION_)/,""); print tolower($0)}')
+            if [ $DEBUG -eq 1 ]; then
+                echo "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is function test"
+            fi
+            test_for_function
         elif [ "${CUR_TEST_VAR}" = "CONTAINER_USER" ]; then
             test_for_user
         else
