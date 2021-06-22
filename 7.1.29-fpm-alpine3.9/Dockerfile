@@ -22,10 +22,10 @@ ENV PHP_FPM_MAX_SPARE_SERVERS 3
 ENV XDEBUG_VERSION 2.7.2
 ENV MEMCACHE_VERSION 3.1.3
 ENV PHPREDIS_VERSION 4.3.0
-ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev
+ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libwebp-dev
 RUN apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} && \
-    docker-php-ext-configure gd --with-gd --with-freetype-dir=/usr/include/ --with-png-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && \
+    docker-php-ext-configure gd --with-gd --with-freetype-dir=/usr/include/ --with-png-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-webp-dir=/usr/include && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} gettext && \
     docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip && \
     pecl install xdebug-${XDEBUG_VERSION} && \
