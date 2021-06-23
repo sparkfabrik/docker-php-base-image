@@ -1,5 +1,12 @@
 name: Docker
-on: push
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - master
+
 
 env:
   IMAGE_NAME: docker-php-base-image
