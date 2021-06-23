@@ -1,4 +1,4 @@
-FROM php:7.4.20-fpm-alpine3.14
+FROM php:7.4.20-fpm-alpine3.13
 
 # Pass inexistent UUID (e.g.: 1001) to enhance the container security
 ARG user=root
