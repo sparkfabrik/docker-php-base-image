@@ -11,6 +11,7 @@ jobs:
       matrix:
         build-target:
           [
+            build-7-4-20,
             build-7-4-16,
             build-7-4-6,
             build-7-3-24,
@@ -80,6 +81,7 @@ jobs:
       matrix:
         build-target:
           [
+            build-7-4-20-rootless,
             build-7-4-16-rootless,
             build-7-4-6-rootless,
             build-7-3-24-rootless,
