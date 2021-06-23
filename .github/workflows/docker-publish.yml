@@ -7,7 +7,6 @@ on:
     branches:
       - master
 
-
 env:
   IMAGE_NAME: docker-php-base-image
 
@@ -82,18 +81,14 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-
-      - name: Build image
-        run: docker buildx build --output "type=image,push=false" ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --tag $IMAGE_NAME:${{ matrix.tag }}
         
-      - name: Push images to GitHub Container Registry
+      - name: Build and push images to GitHub Container Registry
         run: |
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
           # Change all uppercase to lowercase.
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           echo IMAGE_ID=$IMAGE_ID
-          docker tag $IMAGE_NAME:${{ matrix.tag }} $IMAGE_ID:${{ matrix.tag }}
-          docker buildx build --output "type=image,push=true" $IMAGE_ID:${{ matrix.tag }}
+          docker buildx build --push ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --tag $IMAGE_ID:${{ matrix.tag }}
   
   test-rootless:
     runs-on: ubuntu-latest
@@ -158,14 +153,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Build image
-        run: docker buildx build --output "type=image,push=false" ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --build-arg user=1001 --tag $IMAGE_NAME:${{ matrix.tag }}-rootless
-
-      - name: Push images to GitHub Container Registry
+      - name: Build and push images to GitHub Container Registry
         run: |
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
           # Change all uppercase to lowercase.
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           echo IMAGE_ID=$IMAGE_ID
-          docker tag $IMAGE_NAME:${{ matrix.tag }}-rootless $IMAGE_ID:${{ matrix.tag }}-rootless
-          docker buildx build --output "type=image,push=true" $IMAGE_ID:${{ matrix.tag }}-rootless
+          docker buildx build --push ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless
