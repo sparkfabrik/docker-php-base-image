@@ -18,6 +18,7 @@ jobs:
       matrix:
         build-target:
           [
+            build-7-4-20,
             build-7-4-16,
             build-7-4-6,
             build-7-3-24,
@@ -58,7 +59,8 @@ jobs:
             7.2.25-fpm-alpine3.10,
             7.3.24-fpm-alpine3.12,
             7.4.6-fpm-alpine3.10,
-            7.4.16-fpm-alpine3.13
+            7.4.16-fpm-alpine3.13,
+            7.4.20-fpm-alpine3.13
           ]
     steps:
       - uses: actions/checkout@v2
@@ -86,6 +88,7 @@ jobs:
       matrix:
         build-target:
           [
+            build-7-4-20-rootless,
             build-7-4-16-rootless,
             build-7-4-6-rootless,
             build-7-3-24-rootless,
@@ -118,7 +121,8 @@ jobs:
             7.2.25-fpm-alpine3.10,
             7.3.24-fpm-alpine3.12,
             7.4.6-fpm-alpine3.10,
-            7.4.16-fpm-alpine3.13
+            7.4.16-fpm-alpine3.13,
+            7.4.20-fpm-alpine3.13
           ]
     steps:
       - uses: actions/checkout@v2
