@@ -1,3 +1,11 @@
+FROM golang:1.16.6-alpine3.14 as mailhog
+
+# Install mailhog.
+ENV MAILHOG_VERSION 0.2.1
+RUN apk add git && \
+    go get github.com/mailhog/MailHog@v${MAILHOG_VERSION} && \
+    mv /go/bin/MailHog /go/mailhog
+
 FROM php:7.4.16-fpm-alpine3.13
 
 # Pass inexistent UUID (e.g.: 1001) to enhance the container security
@@ -23,9 +31,8 @@ ENV MEMCACHE_VERSION 3.1.5
 ENV PHPREDIS_VERSION 5.3.4
 ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev
 RUN apk update && \
-    apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} && \
-    docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} gettext && \
+    docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include && \
     docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip && \
     pecl install xdebug-${XDEBUG_VERSION} && \
     pecl install redis-${PHPREDIS_VERSION} && \
@@ -37,10 +44,9 @@ RUN apk update && \
     rm -Rf /tmp/blackfire && \
     rm -rf /var/cache/apk/*
 
-# Install mailhog.
-ENV MAILHOG_VERSION v0.1.9
-RUN curl -fSL "https://github.com/mailhog/MailHog/releases/download/${MAILHOG_VERSION}/MailHog_linux_amd64" -o /usr/local/bin/mailhog \
-    && chmod +x /usr/local/bin/mailhog
+# Copy mailhog from golang image.
+COPY --from=mailhog /go/mailhog /usr/local/bin/mailhog
+RUN chmod +x /usr/local/bin/mailhog
 
 # Configure entrypoint.
 COPY docker-entrypoint.sh /docker-entrypoint.sh

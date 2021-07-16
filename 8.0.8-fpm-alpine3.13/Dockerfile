@@ -1,12 +1,12 @@
 FROM golang:1.16.6-alpine3.14 as mailhog
 
 # Install mailhog.
-ENV MAILHOG_VERSION 0.2.1
+ENV MAILHOG_VERSION 1.0.1
 RUN apk add git && \
     go get github.com/mailhog/MailHog@v${MAILHOG_VERSION} && \
     mv /go/bin/MailHog /go/mailhog
 
-FROM php:7.2.0-fpm-alpine3.7
+FROM php:8.0.8-fpm-alpine3.13
 
 # Pass inexistent UUID (e.g.: 1001) to enhance the container security
 ARG user=root
@@ -26,13 +26,13 @@ ENV PHP_FPM_START_SERVERS 2
 ENV PHP_FPM_MIN_SPARE_SERVERS 1
 ENV PHP_FPM_MAX_SPARE_SERVERS 3
 
-ENV XDEBUG_VERSION 2.6.0alpha1
-ENV MEMCACHE_VERSION 3.0.4
-ENV PHPREDIS_VERSION 3.1.4
-ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libwebp-dev
+ENV XDEBUG_VERSION 3.0.4
+ENV MEMCACHE_VERSION 3.1.5
+ENV PHPREDIS_VERSION 5.3.4
+ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev
 RUN apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} gettext && \
-    docker-php-ext-configure gd --with-gd --with-freetype-dir=/usr/include/ --with-png-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-webp-dir=/usr/include && \
+    docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include && \
     docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip && \
     pecl install xdebug-${XDEBUG_VERSION} && \
     pecl install redis-${PHPREDIS_VERSION} && \
