@@ -2,10 +2,10 @@ name: Docker
 on:
   push:
     branches:
-      - '**'
+    - 'master'
   pull_request:
     branches:
-      - master
+    - 'master'
 
 env:
   IMAGE_NAME: docker-php-base-image
@@ -134,6 +134,7 @@ jobs:
       matrix:
         tag:
           [
+            8-0-8,
             7-4-20,
             7-4-16,
             7-4-6,
@@ -171,7 +172,8 @@ jobs:
             7.3.24-fpm-alpine3.12,
             7.4.6-fpm-alpine3.10,
             7.4.16-fpm-alpine3.13,
-            7.4.20-fpm-alpine3.13
+            7.4.20-fpm-alpine3.13,
+            8.0.8-fpm-alpine3.13
           ]
         flavour: [ "", "-rootless" ]
     steps:

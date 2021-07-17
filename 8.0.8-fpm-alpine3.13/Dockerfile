@@ -8,6 +8,9 @@ RUN apk add git && \
 
 FROM php:8.0.8-fpm-alpine3.13
 
+# Build target arch passed by BuildKit
+ARG TARGETARCH
+
 # Pass inexistent UUID (e.g.: 1001) to enhance the container security
 ARG user=root
 
@@ -38,11 +41,20 @@ RUN apk update && \
     pecl install redis-${PHPREDIS_VERSION} && \
     pecl install igbinary memcached-${MEMCACHE_VERSION} --disable-memcached-sasl && \
     apk del ${PHPIZE_DEPS} && \
-    mkdir -p /tmp/blackfire && \
-    curl -A "Docker" -L https://blackfire.io/api/v1/releases/client/linux_static/amd64 | tar zxp -C /tmp/blackfire && \
-    mv /tmp/blackfire/blackfire /usr/bin/blackfire && \
-    rm -Rf /tmp/blackfire && \
     rm -rf /var/cache/apk/*
+
+# Install blackfire client.
+ENV BLACKFIRE_CLIENT_VERSION 2.4.3
+RUN mkdir -p /tmp/blackfire && \
+    curl -A "Docker" -L https://packages.blackfire.io/binaries/blackfire/${BLACKFIRE_CLIENT_VERSION}/blackfire-linux_${TARGETARCH}.tar.gz | tar zxp -C /tmp/blackfire && \
+    mv /tmp/blackfire/blackfire /usr/bin/blackfire && \
+    rm -Rf /tmp/blackfire
+
+# Install blackfire probe.
+ENV BLACKFIRE_PROBE_VERSION 1.64.0
+RUN curl -A "Docker" -o /tmp/blackfire-php-alpine_${TARGETARCH}-php-80.so -D - -L -s https://packages.blackfire.io/binaries/blackfire-php/${BLACKFIRE_PROBE_VERSION}/blackfire-php-alpine_${TARGETARCH}-php-80.so \
+    && mv /tmp/blackfire-*.so $(php -r "echo ini_get('extension_dir');")/blackfire.so \
+    && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://\${BLACKFIRE_HOST}:8707\n" > $PHP_INI_DIR/conf.d/blackfire.ini
 
 # Copy mailhog from golang image.
 COPY --from=mailhog /go/mailhog /usr/local/bin/mailhog
