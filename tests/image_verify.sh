@@ -16,8 +16,13 @@
 # 12:   failed to get the extensions data
 #####################
 
-DEBUG=${DEBUG:-1}
+BASE=$(dirname $0)
+
+DEBUG=${DEBUG:-0}
 DRY_RUN=0
+
+WAIT_FOR_VER=2.1.3
+WAIT_FOR_TIMEOUT=60
 
 DOCKER_TEST_IMAGE="sparkfabrik/php-test-image"
 DOCKER_TEST_IP=""
@@ -261,6 +266,9 @@ fi
 
 EXIT_STATUS=0
 
+# Get "wait-for" script to wait until the docker image will be booted up
+curl -Ls -o ${BASE}/wait-for https://github.com/eficode/wait-for/releases/download/v${WAIT_FOR_VER}/wait-for && chmod +x ${BASE}/wait-for
+
 process_docker_env
 if [ $DEBUG -eq 1 ]; then
     echo "Docker run command: docker run ${DOCKER_ENV} --rm -d -v ${PWD}/tests/php-test-scripts:/var/www/html ${DOCKER_IMAGE}"
@@ -283,6 +291,12 @@ if [ $? -ne 0 ]; then
     echo "Failed to discover the IP address of the docker image"
     exit 10
 fi
+
+if [ $DEBUG -eq 1 ]; then
+    echo "Wait for container readiness (${DOCKER_TEST_IP}:${DOCKER_TEST_PORT})"
+    echo "${BASE}/wait-for -t ${WAIT_FOR_TIMEOUT} ${DOCKER_TEST_IP}:${DOCKER_TEST_PORT}"
+fi
+${BASE}/wait-for -t ${WAIT_FOR_TIMEOUT} ${DOCKER_TEST_IP}:${DOCKER_TEST_PORT}
 
 if [ $DEBUG -eq 1 ]; then
     echo "Get the INI output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_vars.php"
