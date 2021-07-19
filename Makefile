@@ -65,11 +65,11 @@ build-7-2-0-rootless: build-test-image
 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.2.0-fpm-alpine3.7-rootless --build-arg user=1001 7.2.0-fpm-alpine3.7
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:7.2.0-fpm-alpine3.7-rootless "unknown uid 1001"
 
-build-7.2.25: build-test-image
+build-7-2-25: build-test-image
 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.2.25-fpm-alpine3.10 7.2.25-fpm-alpine3.10
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:7.2.25-fpm-alpine3.10 root
 
-build-7.2.25-rootless: build-test-image
+build-7-2-25-rootless: build-test-image
 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.2.25-fpm-alpine3.10-rootless --build-arg user=1001 7.2.25-fpm-alpine3.10
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:7.2.25-fpm-alpine3.10-rootless "unknown uid 1001"
 
@@ -98,12 +98,20 @@ build-7-4-16-rootless: build-test-image
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:7.4.16-fpm-alpine3.13-rootless "unknown uid 1001"
 
 build-7-4-20: build-test-image
-	docker build -t sparkfabrik/docker-php-base-image:7.4.20-fpm-alpine3.13 7.4.20-fpm-alpine3.13
+	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.4.20-fpm-alpine3.13 7.4.20-fpm-alpine3.13
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:7.4.20-fpm-alpine3.13 root
 
 build-7-4-20-rootless: build-test-image
-	docker build -t sparkfabrik/docker-php-base-image:7.4.20-fpm-alpine3.13-rootless --build-arg user=1001 7.4.20-fpm-alpine3.13
+	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.4.20-fpm-alpine3.13-rootless --build-arg user=1001 7.4.20-fpm-alpine3.13
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:7.4.20-fpm-alpine3.13-rootless "unknown uid 1001"
+
+build-8-0-8: build-test-image
+	docker buildx build --load -t sparkfabrik/docker-php-base-image:8.0.8-fpm-alpine3.13 8.0.8-fpm-alpine3.13
+	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:8.0.8-fpm-alpine3.13 root
+
+build-8-0-8-rootless: build-test-image
+	docker buildx build --load -t sparkfabrik/docker-php-base-image:8.0.8-fpm-alpine3.13-rootless --build-arg user=1001 8.0.8-fpm-alpine3.13
+	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:8.0.8-fpm-alpine3.13-rootless "unknown uid 1001"
 
 build-test-image:
 	docker buildx build --load -t sparkfabrik/php-test-image:latest tests

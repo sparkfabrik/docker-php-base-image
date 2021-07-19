@@ -2,10 +2,10 @@ name: Docker
 on:
   push:
     branches:
-      - '**'
+    - 'master'
   pull_request:
     branches:
-      - master
+    - 'master'
 
 env:
   IMAGE_NAME: docker-php-base-image
@@ -17,14 +17,6 @@ jobs:
       matrix:
         tag:
           [
-            build-7-4-20,
-            build-7-4-16,
-            build-7-4-6,
-            build-7-3-24,
-            build-7.2.25,
-            build-7-2-0,
-            build-7-1-29,
-            build-7-1-22,
             build-7-1-12,
             build-7-1-11
           ]
@@ -56,16 +48,7 @@ jobs:
             7.0.20,
             7.0.33,
             7.1.11-fpm-alpine3.4,
-            7.1.12-fpm-alpine3.4,
-            7.1.22-fpm-alpine3.8,
-            7.1.29-fpm-alpine3.9,
-            7.1.6,
-            7.2.0-fpm-alpine3.7,
-            7.2.25-fpm-alpine3.10,
-            7.3.24-fpm-alpine3.12,
-            7.4.6-fpm-alpine3.10,
-            7.4.16-fpm-alpine3.13,
-            7.4.20-fpm-alpine3.13
+            7.1.12-fpm-alpine3.4
           ]
     steps:
       - uses: actions/checkout@v2
@@ -96,14 +79,6 @@ jobs:
       matrix:
         tag:
           [
-            build-7-4-20-rootless,
-            build-7-4-16-rootless,
-            build-7-4-6-rootless,
-            build-7-3-24-rootless,
-            build-7.2.25-rootless,
-            build-7-2-0-rootless,
-            build-7-1-29-rootless,
-            build-7-1-22-rootless,
             build-7-1-12-rootless,
             build-7-1-11-rootless
           ]
@@ -128,15 +103,7 @@ jobs:
         tag:
           [
             7.1.11-fpm-alpine3.4,
-            7.1.12-fpm-alpine3.4,
-            7.1.22-fpm-alpine3.8,
-            7.1.29-fpm-alpine3.9,
-            7.2.0-fpm-alpine3.7,
-            7.2.25-fpm-alpine3.10,
-            7.3.24-fpm-alpine3.12,
-            7.4.6-fpm-alpine3.10,
-            7.4.16-fpm-alpine3.13,
-            7.4.20-fpm-alpine3.13
+            7.1.12-fpm-alpine3.4
           ]
     steps:
       - uses: actions/checkout@v2
@@ -154,6 +121,87 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Build and push images to GitHub Container Registry
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+          # Change all uppercase to lowercase.
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          echo IMAGE_ID=$IMAGE_ID
+          docker buildx build --push ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless
+  
+  test-multiarch:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tag:
+          [
+            8-0-8,
+            7-4-20,
+            7-4-16,
+            7-4-6,
+            7-3-24,
+            7-2-25,
+            7-2-0,
+            7-1-29,
+            7-1-22
+          ]
+        flavour: [ "", "-rootless" ]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build and test the image
+        run: make build-${{ matrix.tag }}${{ matrix.flavour }}
+
+  deploy-multiarch:
+    needs: test-multiarch
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    strategy:
+      matrix:
+        tag:
+          [
+            7.1.22-fpm-alpine3.8,
+            7.1.29-fpm-alpine3.9,
+            7.2.0-fpm-alpine3.7,
+            7.2.25-fpm-alpine3.10,
+            7.3.24-fpm-alpine3.12,
+            7.4.6-fpm-alpine3.10,
+            7.4.16-fpm-alpine3.13,
+            7.4.20-fpm-alpine3.13,
+            8.0.8-fpm-alpine3.13
+          ]
+        flavour: [ "", "-rootless" ]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Log into GitHub Container Registry
+        run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Check directory and Dockerfile
+        run: test -d ${{ matrix.tag }} && test -f ${{ matrix.tag }}/Dockerfile
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      
+      - name: Build and push images to GitHub Container Registry
+        if: ${{ matrix.flavour == '' }}
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+          # Change all uppercase to lowercase.
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          echo IMAGE_ID=$IMAGE_ID
+          docker buildx build --push ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --tag $IMAGE_ID:${{ matrix.tag }}
+
+      - name: Build and push images to GitHub Container Registry (rootless)
+        if: ${{ matrix.flavour == '-rootless' }}
         run: |
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
           # Change all uppercase to lowercase.
