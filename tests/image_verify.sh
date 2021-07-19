@@ -16,7 +16,7 @@
 # 12:   failed to get the extensions data
 #####################
 
-DEBUG=${DEBUG:-0}
+DEBUG=${DEBUG:-1}
 DRY_RUN=0
 
 DOCKER_TEST_IMAGE="sparkfabrik/php-test-image"

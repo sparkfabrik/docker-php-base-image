@@ -14,6 +14,9 @@ export XDEBUG_ENABLE=${XDEBUG_ENABLE:-0}
 export MAILHOG_HOST=${MAILHOG_HOST:-"mail"}
 export MAILHOG_PORT=${MAILHOG_PORT:-1025}
 
+# Blackfire configurations.
+export BLACKFIRE_APM_ENABLED=${BLACKFIRE_APM_ENABLED:-0}
+
 if [ "${MEMCACHED_ENABLE}" = "1" ]; then
 	cp /usr/local/etc/php/conf.disabled/memcached.ini /usr/local/etc/php/conf.d/memcached.ini
 else
