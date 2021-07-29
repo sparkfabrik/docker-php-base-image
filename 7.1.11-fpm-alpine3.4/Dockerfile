@@ -48,6 +48,11 @@ ENV MAILHOG_VERSION v0.1.9
 RUN curl -fSL "https://github.com/mailhog/MailHog/releases/download/${MAILHOG_VERSION}/MailHog_linux_amd64" -o /usr/local/bin/mailhog \
     && chmod +x /usr/local/bin/mailhog
 
+# Install ldap module.
+RUN apk add --no-cache ldb-dev libldap openldap-dev
+RUN docker-php-ext-configure ldap
+RUN docker-php-ext-install ldap
+
 # Configure entrypoint.
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh

@@ -61,6 +61,11 @@ RUN curl -A "Docker" -o /tmp/blackfire-php-alpine_${TARGETARCH}-php-71.so -D - -
 COPY --from=mailhog /go/mailhog /usr/local/bin/mailhog
 RUN chmod +x /usr/local/bin/mailhog
 
+# Install ldap module.
+RUN apk add --no-cache ldb-dev libldap openldap-dev
+RUN docker-php-ext-configure ldap
+RUN docker-php-ext-install ldap
+
 # Configure entrypoint.
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh

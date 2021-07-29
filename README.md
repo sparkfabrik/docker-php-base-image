@@ -42,6 +42,7 @@ The entrypoint file contains a list of environment variables that will be replac
 - `MEMCACHED_ENABLE`: enable memcached extension (default `0`)
 - `XDEBUG_ENABLE`: enable xdebug extension (default `0`; you need to set `XDEBUG_REMOTE_HOST` env variable also)
 - `MAILHOG_ENABLE`: change the default `sendmail_path` with the `mailhog` command (default `0`)
+- `LDAP_ENABLE`: enable ldap extension (default `0`)
 
 ### Services configurations
 
