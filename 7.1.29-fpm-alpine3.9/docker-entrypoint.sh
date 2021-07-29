@@ -42,10 +42,8 @@ else
 	rm -f /usr/local/etc/php/conf.d/xdebug.ini || true
 fi
 
-if [ "${LDAP_ENABLE}" = "1" ]; then
-	cp /usr/local/etc/php/conf.disabled/ldap.ini /usr/local/etc/php/conf.d/ldap.ini
-else
-	rm -f /usr/local/etc/php/conf.d/ldap.ini || true
+if [ "${LDAP_ENABLE}" = "0" ]; then
+	rm -f /usr/local/etc/php/conf.d/docker-php-ext-ldap.ini || true
 fi
 
 # php-fpm template env subst.

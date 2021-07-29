@@ -32,11 +32,12 @@ ENV PHP_FPM_MAX_SPARE_SERVERS 3
 ENV XDEBUG_VERSION 3.0.4
 ENV MEMCACHE_VERSION 3.1.5
 ENV PHPREDIS_VERSION 5.3.4
-ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev
+ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev ldb-dev libldap openldap-dev
 RUN apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} gettext && \
     docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include && \
-    docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip && \
+    docker-php-ext-configure ldap && \
+    docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip ldap && \
     pecl install xdebug-${XDEBUG_VERSION} && \
     pecl install redis-${PHPREDIS_VERSION} && \
     pecl install igbinary memcached-${MEMCACHE_VERSION} --disable-memcached-sasl && \
@@ -59,11 +60,6 @@ RUN curl -A "Docker" -o /tmp/blackfire-php-alpine_${TARGETARCH}-php-80.so -D - -
 # Copy mailhog from golang image.
 COPY --from=mailhog /go/mailhog /usr/local/bin/mailhog
 RUN chmod +x /usr/local/bin/mailhog
-
-# Install ldap module.
-RUN apk add --no-cache ldb-dev libldap openldap-dev
-RUN docker-php-ext-configure ldap
-RUN docker-php-ext-install ldap
 
 # Configure entrypoint.
 COPY docker-entrypoint.sh /docker-entrypoint.sh
