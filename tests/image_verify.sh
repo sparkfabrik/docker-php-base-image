@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 ### Exit status ###
 # 0:    success
 # 1:    unsupported flag
@@ -27,6 +29,7 @@ WAIT_FOR_TIMEOUT=60
 DOCKER_TEST_IMAGE="sparkfabrik/php-test-image"
 DOCKER_TEST_IP=""
 DOCKER_TEST_PORT=9000
+DOCKER_TEST_HEADERS=""
 DOCKER_TEST_INI=""
 DOCKER_TEST_EXT=""
 DOCKER_TEST_EXT_FUNCS=""
@@ -87,6 +90,12 @@ Options:
     --source PATH                       Defines a path for a file which includes the desired expectations
     --user,-u STRING                    Defines the default user for the image
 EOM
+}
+
+debug() {
+  if [ -n "${1:-}" ] && [ ${DEBUG:-0} -eq 1 ]; then
+    echo "${1}"
+  fi
 }
 
 process_docker_env() {
@@ -165,7 +174,7 @@ test_for_ini() {
     if [ $LOC_EXIT_STATUS -ne 0 ] && [ $LOC_EXIT_STATUS -gt $EXIT_STATUS ]; then
         EXIT_STATUS=$LOC_EXIT_STATUS
     fi
-    
+
     return $LOC_EXIT_STATUS
 }
 
@@ -198,13 +207,49 @@ test_for_module() {
     return $LOC_EXIT_STATUS
 }
 
+test_for_header() {
+    LOC_EXIT_STATUS=5
+    if [ -n "${CUR_TEST_VAR}" ]; then
+        LOC_EXIT_STATUS=0
+        TEST_PASSED=1
+
+        if [ -z "${CUR_TEST_VAL}" ]; then
+            debug "Test that the header is not present"
+            if [ $(echo "${DOCKER_TEST_HEADERS}" | grep -i "^${CUR_TEST_VAR}: " | wc -l) -ne 0 ]; then
+                TEST_PASSED=0
+                LOC_EXIT_STATUS=6
+            fi
+        else
+            debug "Test header value"
+            CONTAINER_VAL=$(echo "${DOCKER_TEST_HEADERS}" | grep -i "^${CUR_TEST_VAR}: " | awk '{print $2}')
+
+            if [ $(echo "${CONTAINER_VAL}" | grep -E "${CUR_TEST_VAL}" | wc -l) -ne 1 ]; then
+                TEST_PASSED=0
+                LOC_EXIT_STATUS=6
+            fi
+        fi
+
+        [ $TEST_PASSED -eq 1 ] && TEST_PASSED_STR="\e[32mOK\e[39m" || TEST_PASSED_STR="\e[31mFAIL\e[39m"
+        echo "Testing the expectation for ${CUR_TEST_VAR}: ${TEST_PASSED_STR}"
+        if [ $TEST_PASSED -ne 1 ]; then
+            echo "Expected: ${CUR_TEST_VAL} - Actual value: ${CONTAINER_VAL}"
+            echo ""
+        fi
+    fi
+
+    if [ $LOC_EXIT_STATUS -ne 0 ] && [ $LOC_EXIT_STATUS -gt $EXIT_STATUS ]; then
+        EXIT_STATUS=$LOC_EXIT_STATUS
+    fi
+
+    return $LOC_EXIT_STATUS
+}
+
 test_for_function() {
     LOC_EXIT_STATUS=5
     if [ -n "${CUR_TEST_VAR}" ] && [ -n "${CUR_TEST_VAL}" ]; then
         LOC_EXIT_STATUS=0
         TEST_PASSED=1
-        CONTAINER_VAL=$(echo "${DOCKER_TEST_EXT_FUNCS}" | tail -n +4 | jq --raw-output ".${CUR_TEST_VAL}" | grep "${CUR_TEST_VAR}" | awk '{gsub(/"/,""); gsub(/,/,""); print $1}')
-        
+        CONTAINER_VAL=$(echo "${DOCKER_TEST_EXT_FUNCS}" | tail -n +3 | jq --raw-output ".${CUR_TEST_VAL}" | grep "${CUR_TEST_VAR}" | awk '{gsub(/"/,""); gsub(/,/,""); print $1}')
         
         if [ "${CONTAINER_VAL}" != "${CUR_TEST_VAR}" ]; then
             TEST_PASSED=0
@@ -270,55 +315,42 @@ EXIT_STATUS=0
 curl -Ls -o ${BASE}/wait-for https://github.com/eficode/wait-for/releases/download/v${WAIT_FOR_VER}/wait-for && chmod +x ${BASE}/wait-for
 
 process_docker_env
-if [ $DEBUG -eq 1 ]; then
-    echo "Docker run command: docker run ${DOCKER_ENV} --rm -d -v ${PWD}/tests/php-test-scripts:/var/www/html ${DOCKER_IMAGE}"
-fi
+debug "Docker run command: docker run ${DOCKER_ENV} --rm -d -v ${PWD}/tests/php-test-scripts:/var/www/html ${DOCKER_IMAGE}"
 CONTAINER_ID=$(docker run ${DOCKER_ENV} --rm -d -v ${PWD}/tests/php-test-scripts:/var/www/html ${DOCKER_IMAGE})
 if [ $? -ne 0 ]; then
     echo "Failed to start the docker image"
     exit 9
 fi
 
-if [ $DEBUG -eq 1 ]; then
-    echo "I will perform the tests on the container with id: ${CONTAINER_ID}"
-fi
-
-if [ $DEBUG -eq 1 ]; then
-    echo "Find the container IP address: docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_ID}"
-fi
+debug "I will perform the tests on the container with id: ${CONTAINER_ID}"
+debug "Find the container IP address: docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_ID}"
 DOCKER_TEST_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_ID})
 if [ $? -ne 0 ]; then
     echo "Failed to discover the IP address of the docker image"
     exit 10
 fi
 
-if [ $DEBUG -eq 1 ]; then
-    echo "Wait for container readiness (${DOCKER_TEST_IP}:${DOCKER_TEST_PORT})"
-    echo "${BASE}/wait-for -t ${WAIT_FOR_TIMEOUT} ${DOCKER_TEST_IP}:${DOCKER_TEST_PORT}"
-fi
+debug "Wait for container readiness (${DOCKER_TEST_IP}:${DOCKER_TEST_PORT})"
+debug "${BASE}/wait-for -t ${WAIT_FOR_TIMEOUT} ${DOCKER_TEST_IP}:${DOCKER_TEST_PORT}"
 ${BASE}/wait-for -t ${WAIT_FOR_TIMEOUT} ${DOCKER_TEST_IP}:${DOCKER_TEST_PORT}
 
-if [ $DEBUG -eq 1 ]; then
-    echo "Get the INI output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_vars.php"
-fi
+debug "Get the INI output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_vars.php"
 DOCKER_TEST_INI=$(docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_vars.php)
 if [ $? -ne 0 ]; then
     echo "Failed to get the ini data"
     exit 11
 fi
 
-if [ $DEBUG -eq 1 ]; then
-    echo "Get the EXT output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_loaded_ext.php"
-fi
+DOCKER_TEST_HEADERS=$(echo "${DOCKER_TEST_INI}" | awk -v 'RS=\n\r' '1;{exit}' | tr -d "\r")
+
+debug "Get the EXT output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_loaded_ext.php"
 DOCKER_TEST_EXT=$(docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_loaded_ext.php)
 if [ $? -ne 0 ]; then
     echo "Failed to get the extensions data"
     exit 12
 fi
 
-if [ $DEBUG -eq 1 ]; then
-    echo "Get the EXT FUNCTIONS output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_functions_ext.php"
-fi
+debug "Get the EXT FUNCTIONS output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_functions_ext.php"
 DOCKER_TEST_EXT_FUNCS=$(docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_functions_ext.php)
 if [ $? -ne 0 ]; then
     echo "Failed to get the extensions data"
@@ -332,22 +364,20 @@ for line in $(grep -v '^#' ${SOURCE_FILE}); do
 
         if [ "$(echo ${CUR_TEST_VAR} | awk '$0 ~ /^MODULE_/ {print 1}')" = "1" ]; then
             CUR_TEST_VAR=$(echo "${CUR_TEST_VAR}" | awk '{gsub(/(MODULE_)|(_ENABLE)/,""); print tolower($0)}')
-            if [ $DEBUG -eq 1 ]; then
-                echo "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is module test"
-            fi
+            debug "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is module test"
             test_for_module
         elif [ "$(echo ${CUR_TEST_VAR} | awk '$0 ~ /^FUNCTION_/ {print 1}')" = "1" ]; then
             CUR_TEST_VAR=$(echo "${CUR_TEST_VAR}" | awk '{gsub(/(FUNCTION_)/,""); print tolower($0)}')
-            if [ $DEBUG -eq 1 ]; then
-                echo "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is function test"
-            fi
+            debug "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is function test"
             test_for_function
+        elif [ "$(echo ${CUR_TEST_VAR} | awk '$0 ~ /^HEADER_/ {print 1}')" = "1" ]; then
+            CUR_TEST_VAR=$(echo "${CUR_TEST_VAR}" | awk '{gsub(/(HEADER_)/,""); print tolower($0)}')
+            debug "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is header test"
+            test_for_header
         elif [ "${CUR_TEST_VAR}" = "CONTAINER_USER" ]; then
             test_for_user
         else
-            if [ $DEBUG -eq 1 ]; then
-                echo "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is ini test"
-            fi
+            debug "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is ini test"
             test_for_ini
         fi
     fi
@@ -358,9 +388,7 @@ if [ -n "${TEST_USER}" ]; then
     test_for_user
 fi
 
-if [ $DEBUG -eq 1 ]; then
-    echo "Docker stop command: docker stop ${CONTAINER_ID} >/dev/null 2>&1"
-fi
+debug "Docker stop command: docker stop ${CONTAINER_ID} >/dev/null 2>&1"
 docker stop ${CONTAINER_ID} >/dev/null 2>&1
 
 if [ $EXIT_STATUS -eq 0 ]; then
