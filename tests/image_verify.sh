@@ -157,7 +157,7 @@ test_for_ini() {
         LOC_EXIT_STATUS=0
         TEST_PASSED=1
         CONTAINER_VAL=$(echo "${DOCKER_TEST_INI}" | grep "^${CUR_TEST_VAR} => " | awk '{print $3}')
-        
+
         if [ "${CONTAINER_VAL}" != "${CUR_TEST_VAL}" ]; then
             TEST_PASSED=0
             LOC_EXIT_STATUS=6
@@ -184,7 +184,7 @@ test_for_module() {
         LOC_EXIT_STATUS=0
         TEST_PASSED=1
         CONTAINER_VAL=$(echo "${DOCKER_TEST_EXT}" | grep "${CUR_TEST_VAR}" | wc -l)
-        
+
         if [ "${CONTAINER_VAL}" != "${CUR_TEST_VAL}" ]; then
             TEST_PASSED=0
             LOC_EXIT_STATUS=6
@@ -199,7 +199,7 @@ test_for_module() {
             echo ""
         fi
     fi
-    
+
     if [ $LOC_EXIT_STATUS -ne 0 ] && [ $LOC_EXIT_STATUS -gt $EXIT_STATUS ]; then
         EXIT_STATUS=$LOC_EXIT_STATUS
     fi
@@ -250,7 +250,7 @@ test_for_function() {
         LOC_EXIT_STATUS=0
         TEST_PASSED=1
         CONTAINER_VAL=$(echo "${DOCKER_TEST_EXT_FUNCS}" | tail -n +3 | jq --raw-output ".${CUR_TEST_VAL}" | grep "${CUR_TEST_VAR}" | awk '{gsub(/"/,""); gsub(/,/,""); print $1}')
-        
+
         if [ "${CONTAINER_VAL}" != "${CUR_TEST_VAR}" ]; then
             TEST_PASSED=0
             LOC_EXIT_STATUS=6
@@ -263,7 +263,7 @@ test_for_function() {
             echo ""
         fi
     fi
-    
+
     if [ $LOC_EXIT_STATUS -ne 0 ] && [ $LOC_EXIT_STATUS -gt $EXIT_STATUS ]; then
         EXIT_STATUS=$LOC_EXIT_STATUS
     fi
@@ -291,7 +291,7 @@ test_for_user() {
             echo ""
         fi
     fi
-    
+
     if [ $LOC_EXIT_STATUS -ne 0 ] && [ $LOC_EXIT_STATUS -gt $EXIT_STATUS ]; then
         EXIT_STATUS=$LOC_EXIT_STATUS
     fi
