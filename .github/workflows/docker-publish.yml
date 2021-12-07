@@ -133,6 +133,7 @@ jobs:
   test-multiarch:
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 3
       matrix:
         tag:
           [
@@ -165,6 +166,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     strategy:
+      max-parallel: 3
       matrix:
         tag:
           [
