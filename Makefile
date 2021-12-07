@@ -105,6 +105,14 @@ build-7-4-20-rootless: build-test-image
 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.4.20-fpm-alpine3.13-rootless --build-arg user=1001 7.4.20-fpm-alpine3.13
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:7.4.20-fpm-alpine3.13-rootless "unknown uid 1001"
 
+build-7-4-26: build-test-image
+	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.4.26-fpm-alpine3.15 7.4.26-fpm-alpine3.15
+	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:7.4.26-fpm-alpine3.15 root
+
+build-7-4-26-rootless: build-test-image
+	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.4.26-fpm-alpine3.15-rootless --build-arg user=1001 7.4.26-fpm-alpine3.15
+	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:7.4.26-fpm-alpine3.15-rootless "unknown uid 1001"
+
 build-8-0-8: build-test-image
 	docker buildx build --load -t sparkfabrik/docker-php-base-image:8.0.8-fpm-alpine3.13 8.0.8-fpm-alpine3.13
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:8.0.8-fpm-alpine3.13 root
