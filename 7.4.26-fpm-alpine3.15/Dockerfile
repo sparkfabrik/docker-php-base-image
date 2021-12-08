@@ -22,6 +22,7 @@ ENV PHP_UPLOAD_MAX_FILE_SIZE 32M
 ENV PHP_POST_MAX_SIZE 32M
 ENV PHP_MAX_EXECUTION_TIME 30
 ENV BLACKFIRE_HOST=${BLACKFIRE_HOST:-blackfire}
+ENV BLACKFIRE_PORT=${BLACKFIRE_PORT:-8707}
 ENV PHP_EXPOSE_PHP 0
 
 # FPM Configurations.
@@ -58,7 +59,7 @@ RUN mkdir -p /tmp/blackfire && \
 ENV BLACKFIRE_PROBE_VERSION 1.71.0
 RUN curl -A "Docker" -o /tmp/blackfire-php-alpine_${TARGETARCH}-php-74.so -D - -L -s https://packages.blackfire.io/binaries/blackfire-php/${BLACKFIRE_PROBE_VERSION}/blackfire-php-alpine_${TARGETARCH}-php-74.so \
     && mv /tmp/blackfire-*.so $(php -r "echo ini_get('extension_dir');")/blackfire.so \
-    && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://\${BLACKFIRE_HOST}:8707\nblackfire.apm_enabled=\${BLACKFIRE_APM_ENABLED}\n" > $PHP_INI_DIR/conf.d/blackfire.ini
+    && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://\${BLACKFIRE_HOST}:${BLACKFIRE_PORT}\nblackfire.apm_enabled=\${BLACKFIRE_APM_ENABLED}\n" > $PHP_INI_DIR/conf.d/blackfire.ini
 
 # Copy mailhog from golang image.
 COPY --from=mailhog /go/mailhog /usr/local/bin/mailhog
