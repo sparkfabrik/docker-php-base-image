@@ -14,6 +14,7 @@ export LDAP_ENABLE=${LDAP_ENABLE:-0}
 # Services configurations.
 export MAILHOG_HOST=${MAILHOG_HOST:-"mail"}
 export MAILHOG_PORT=${MAILHOG_PORT:-1025}
+export APCU_ENABLE=${APCU_ENABLE:-1}
 
 # Blackfire configurations.
 export BLACKFIRE_APM_ENABLED=${BLACKFIRE_APM_ENABLED:-0}

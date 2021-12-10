@@ -15,6 +15,7 @@ export APCU_ENABLE=${APCU_ENABLE:-1}
 # Services configurations.
 export MAILHOG_HOST=${MAILHOG_HOST:-"mail"}
 export MAILHOG_PORT=${MAILHOG_PORT:-1025}
+export APCU_ENABLE=${APCU_ENABLE:-1}
 
 # Blackfire configurations.
 export BLACKFIRE_APM_ENABLED=${BLACKFIRE_APM_ENABLED:-0}
@@ -37,7 +38,7 @@ else
 	rm -f /usr/local/etc/php/conf.d/mailhog.ini || true
 fi
 
-if [ "${XDEBUG_ENABLE}" = "1" ]; then
+if [ "${XDEBUG_ENABLE}" = "1" ]; then1.19.14-gke.1900
 	cp /usr/local/etc/php/conf.disabled/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
 else
 	rm -f /usr/local/etc/php/conf.d/xdebug.ini || true
