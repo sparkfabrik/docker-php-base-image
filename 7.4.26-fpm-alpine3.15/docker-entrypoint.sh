@@ -38,7 +38,7 @@ else
 	rm -f /usr/local/etc/php/conf.d/mailhog.ini || true
 fi
 
-if [ "${XDEBUG_ENABLE}" = "1" ]; then1.19.14-gke.1900
+if [ "${XDEBUG_ENABLE}" = "1" ]; then
 	cp /usr/local/etc/php/conf.disabled/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
 else
 	rm -f /usr/local/etc/php/conf.d/xdebug.ini || true
