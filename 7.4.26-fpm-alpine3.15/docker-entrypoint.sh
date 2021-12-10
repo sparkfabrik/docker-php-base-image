@@ -10,6 +10,7 @@ export MEMCACHED_ENABLE=${MEMCACHED_ENABLE:-0}
 export REDIS_ENABLE=${REDIS_ENABLE:-0}
 export XDEBUG_ENABLE=${XDEBUG_ENABLE:-0}
 export LDAP_ENABLE=${LDAP_ENABLE:-0}
+export APCU_ENABLE=${APCU_ENABLE:-1}
 
 # Services configurations.
 export MAILHOG_HOST=${MAILHOG_HOST:-"mail"}
@@ -44,6 +45,12 @@ fi
 
 if [ "${LDAP_ENABLE}" = "0" ]; then
 	rm -f /usr/local/etc/php/conf.d/docker-php-ext-ldap.ini || true
+fi
+
+if [ "${APCU_ENABLE}" = "1" ]; then
+	cp /usr/local/etc/php/conf.disabled/apcu.ini /usr/local/etc/php/conf.d/apcu.ini
+else
+	rm -f /usr/local/etc/php/conf.d/apcu.ini || true
 fi
 
 # php-fpm template env subst.

@@ -46,6 +46,12 @@ if [ "${LDAP_ENABLE}" = "0" ]; then
 	rm -f /usr/local/etc/php/conf.d/docker-php-ext-ldap.ini || true
 fi
 
+if [ "${APCU_ENABLE}" = "1" ]; then
+	cp /usr/local/etc/php/conf.disabled/apcu.ini /usr/local/etc/php/conf.d/apcu.ini
+else
+	rm -f /usr/local/etc/php/conf.d/apcu.ini || true
+fi
+
 # php-fpm template env subst.
 envsubst < /templates/zz2-docker-custom.conf > /usr/local/etc/php-fpm.d/zz2-docker-custom.conf
 
