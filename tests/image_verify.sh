@@ -322,12 +322,12 @@ if [ $? -ne 0 ]; then
     echo "Failed to start the docker image"
     exit 9
 fi
-if [ ! $(docker ps | grep ${CONTAINER_ID}) ]; then
+if [ ! "$(docker ps --no-trunc | grep ${CONTAINER_ID})" ]; then
     echo ""
     echo "Failed to start the docker image, with the following errors:"
     docker logs ${CONTAINER_ID}
     echo ""
-    docker rm -vf ${CONTAINER_ID}
+    # docker rm -vf ${CONTAINER_ID}
     exit 9
 fi
 
