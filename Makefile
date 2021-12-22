@@ -1,30 +1,3 @@
-build-5-4-45:
-	docker buildx build --load -t sparkfabrik/php5.4.45 5.4.45
-
-build-5-5-9:
-	docker buildx build --load -t sparkfabrik/php5.5.9 5.5.9
-
-build-5-6-19:
-	docker buildx build --load -t sparkfabrik/php5.6.19 5.6.19
-
-build-5-6-26:
-	docker buildx build --load -t sparkfabrik/php5.6.26 5.6.26
-
-build-7-0-6:
-	docker buildx build --load -t sparkfabrik/php7.0.6 7.0.6
-
-build-7-0-8:
-	docker buildx build --load -t sparkfabrik/php7.0.6 7.0.8
-
-build-7-0-20:
-	docker buildx build --load -t sparkfabrik/php7.0.20 7.0.20
-
-build-7-0-33:
-	docker buildx build --load -t sparkfabrik/php7.0.33 7.0.33
-
-build-7-1-6:
-	docker buildx build --load -t sparkfabrik/php7.1.6 7.1.6
-
 build-7-1-11: build-test-image
 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.1.11-fpm-alpine3.4 7.1.11-fpm-alpine3.4
 	./tests/tests_wrapper.sh php7/mailhog_enabled sparkfabrik/docker-php-base-image:7.1.11-fpm-alpine3.4 root

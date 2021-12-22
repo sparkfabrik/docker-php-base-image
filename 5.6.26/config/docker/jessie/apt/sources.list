@@ -1,4 +1,0 @@
-# @see https://unix.stackexchange.com/questions/508724/failed-to-fetch-jessie-backports-repository
-deb http://deb.debian.org/debian/ jessie main
-deb http://security.debian.org/ jessie/updates main
-deb [check-valid-until=no] http://archive.debian.org/debian jessie-backports main
