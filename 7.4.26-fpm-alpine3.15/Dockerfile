@@ -48,6 +48,12 @@ RUN apk update && \
     apk del ${PHPIZE_DEPS} && \
     rm -rf /var/cache/apk/*
 
+# Install APCu.
+ENV APCU_VERSION 5.1.21
+RUN apk add --no-cache --virtual .phpize-deps-configure $PHPIZE_DEPS && \
+    pecl install apcu-${APCU_VERSION} && \
+    apk del .phpize-deps-configure
+
 # Install blackfire client.
 ENV BLACKFIRE_CLIENT_VERSION 2.5.2
 RUN mkdir -p /tmp/blackfire && \

@@ -315,10 +315,19 @@ EXIT_STATUS=0
 curl -Ls -o ${BASE}/wait-for https://github.com/eficode/wait-for/releases/download/v${WAIT_FOR_VER}/wait-for && chmod +x ${BASE}/wait-for
 
 process_docker_env
-debug "Docker run command: docker run ${DOCKER_ENV} --rm -d -v ${PWD}/tests/php-test-scripts:/var/www/html ${DOCKER_IMAGE}"
-CONTAINER_ID=$(docker run ${DOCKER_ENV} --rm -d -v ${PWD}/tests/php-test-scripts:/var/www/html ${DOCKER_IMAGE})
+RUNCMD="docker run ${DOCKER_ENV} -d -v ${PWD}/tests/php-test-scripts:/var/www/html ${DOCKER_IMAGE}"
+debug "Docker run command: ${RUNCMD}"
+CONTAINER_ID=$(${RUNCMD})
 if [ $? -ne 0 ]; then
     echo "Failed to start the docker image"
+    exit 9
+fi
+if [ ! "$(docker ps --no-trunc | grep ${CONTAINER_ID})" ]; then
+    echo ""
+    echo "Failed to start the docker image, with the following errors:"
+    docker logs ${CONTAINER_ID}
+    echo ""
+    # docker rm -vf ${CONTAINER_ID}
     exit 9
 fi
 
