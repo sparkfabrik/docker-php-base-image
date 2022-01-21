@@ -33,7 +33,7 @@ ENV PHP_FPM_MIN_SPARE_SERVERS 1
 ENV PHP_FPM_MAX_SPARE_SERVERS 3
 ENV PHP_FPM_PM_STATUS_PATH /status
 
-ENV XDEBUG_VERSION 3.0.4
+ENV XDEBUG_VERSION 3.1.2
 ENV MEMCACHE_VERSION 3.1.5
 ENV PHPREDIS_VERSION 5.3.4
 ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev ldb-dev libldap openldap-dev
