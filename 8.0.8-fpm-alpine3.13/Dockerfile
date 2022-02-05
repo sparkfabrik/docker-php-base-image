@@ -14,7 +14,7 @@ ARG TARGETARCH
 # Pass inexistent UUID (e.g.: 1001) to enhance the container security
 ARG user=root
 
-# Default php configurations values.
+# Default php configurations values.
 ENV PHP_MEMORY_LIMIT 64M
 ENV PHP_TIMEZONE=Europe/Rome
 ENV PHP_REALPATH_CACHE_SIZE 2M
@@ -62,10 +62,14 @@ RUN mkdir -p /tmp/blackfire && \
     rm -Rf /tmp/blackfire
 
 # Install blackfire probe.
-ENV BLACKFIRE_PROBE_VERSION 1.64.0
-RUN curl -A "Docker" -o /tmp/blackfire-php-alpine_${TARGETARCH}-php-80.so -D - -L -s https://packages.blackfire.io/binaries/blackfire-php/${BLACKFIRE_PROBE_VERSION}/blackfire-php-alpine_${TARGETARCH}-php-80.so \
-    && mv /tmp/blackfire-*.so $(php -r "echo ini_get('extension_dir');")/blackfire.so \
-    && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://\${BLACKFIRE_HOST}:${BLACKFIRE_PORT}\nblackfire.apm_enabled=\${BLACKFIRE_APM_ENABLED}\n" > $PHP_INI_DIR/conf.d/blackfire.ini
+RUN version=$(php -r "echo PHP_MAJOR_VERSION.PHP_MINOR_VERSION;") \
+    && architecture=$(uname -m) \
+    && curl -A "Docker" -o /tmp/blackfire-probe.tar.gz -D - -L -s https://blackfire.io/api/v1/releases/probe/php/alpine/$architecture/$version \
+    && mkdir -p /tmp/blackfire \
+    && tar zxpf /tmp/blackfire-probe.tar.gz -C /tmp/blackfire \
+    && mv /tmp/blackfire/blackfire-*.so $(php -r "echo ini_get ('extension_dir');")/blackfire.so \
+    && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://\${BLACKFIRE_HOST}:${BLACKFIRE_PORT}\nblackfire.apm_enabled=\${BLACKFIRE_APM_ENABLED}\n" > $PHP_INI_DIR/conf.d/blackfire.ini \
+    && rm -rf /tmp/blackfire /tmp/blackfire-probe.tar.gz
 
 # Copy mailhog from golang image.
 COPY --from=mailhog /go/mailhog /usr/local/bin/mailhog

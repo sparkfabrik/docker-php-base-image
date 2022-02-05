@@ -11,7 +11,7 @@ export REDIS_ENABLE=${REDIS_ENABLE:-0}
 export XDEBUG_ENABLE=${XDEBUG_ENABLE:-0}
 export LDAP_ENABLE=${LDAP_ENABLE:-0}
 
-# Services configurations.
+# Services configurations.
 export MAILHOG_HOST=${MAILHOG_HOST:-"mail"}
 export MAILHOG_PORT=${MAILHOG_PORT:-1025}
 export APCU_ENABLE=${APCU_ENABLE:-1}
