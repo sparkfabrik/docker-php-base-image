@@ -5,7 +5,7 @@ if [ -z "${1}" ]; then
   exit 1
 fi
 
-if [ -z "${2}" ] || [ ${2} -le 0 ]; then
+if [ -z "${2}" ] || [ "${2}" -le 0 ]; then
   echo "You must provide the PORT of the PHP-FPM"
   exit 2
 fi
@@ -15,4 +15,4 @@ if [ -n "${3}" ]; then
   SCRIPT="${3}"
 fi
 
-SCRIPT_NAME=$(basename ${SCRIPT}) SCRIPT_FILENAME=${SCRIPT} REQUEST_METHOD=GET cgi-fcgi -bind -connect ${1}:${2}
+SCRIPT_NAME=$(basename "${SCRIPT}") SCRIPT_FILENAME=${SCRIPT} REQUEST_METHOD=GET cgi-fcgi -bind -connect "${1}":"${2}"

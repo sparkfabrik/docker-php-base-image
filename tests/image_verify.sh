@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -e
 
@@ -18,7 +18,7 @@ set -e
 # 12:   failed to get the extensions data
 #####################
 
-BASE=$(dirname $0)
+BASE=$(dirname "$0")
 
 DEBUG=${DEBUG:-0}
 DRY_RUN=0
@@ -68,18 +68,19 @@ cat <<EOM
 
 ### Defined variables ###
 EOM
-    for line in $(grep -v '^#' ${SOURCE_FILE}); do
-        if [ -n "${line}" ]; then
-            CUR_TEST_VAR=$(echo "${line}" | awk '{split($0,a,"="); print a[1]}')
-            CUR_TEST_VAL=$(echo "${line}" | awk '{gsub(/\"/,""); split($0,a,"="); print a[2]}')
-            printf "%-${PAD}s %s\n" "${CUR_TEST_VAR}" "${CUR_TEST_VAL}"
-        fi
-    done
+
+    while IFS= read -r line; do
+      if [ -n "${line}" ]; then
+        CUR_TEST_VAR=$(echo "${line}" | awk '{split($0,a,"="); print a[1]}')
+        CUR_TEST_VAL=$(echo "${line}" | awk '{gsub(/\"/,""); split($0,a,"="); print a[2]}')
+        printf "%-${PAD}s %s\n" "${CUR_TEST_VAR}" "${CUR_TEST_VAL}"
+      fi
+    done < <(grep -v '^#' "${SOURCE_FILE}")
 }
 
 show_usage() {
     cat <<EOM
-Usage: $(basename $0) [OPTIONS] [EXPECTATIONS] <DOCKER IMAGE> [DOCKER TEST IMAGE]
+Usage: $(basename "$0") [OPTIONS] [EXPECTATIONS] <DOCKER IMAGE> [DOCKER TEST IMAGE]
 Options:
     --help,-h                           Print this help message
     --dry-run                           The script will only print the expectations
@@ -93,13 +94,14 @@ EOM
 }
 
 debug() {
-  if [ -n "${1:-}" ] && [ ${DEBUG:-0} -eq 1 ]; then
+  if [ -n "${1:-}" ] && [ "${DEBUG:-0}" -eq 1 ]; then
     echo "${1}"
   fi
 }
 
 process_docker_env() {
     if [ -n "${ENV_LIST}" ]; then
+        # shellcheck disable=SC2001
         DOCKER_ENV="-e $(echo "${ENV_LIST}" | sed 's/,/ -e /g;')"
     fi
     if [ -n "${ENV_FILE}" ]; then
@@ -127,7 +129,7 @@ while [ -n "${1}" ]; do
         --fpm-port) DOCKER_TEST_PORT="${2}"; shift 2 ;;
         --source) SOURCE_FILE="${2}"; if [ ! -f "${SOURCE_FILE}" ]; then exit 2; fi; shift 2 ;;
         --user|-u) TEST_USER="${2}"; shift 2 ;;
-        -*|--*=) echo "Error: Unsupported flag $1" >&2; exit 1 ;;
+        -*) echo "Error: Unsupported flag $1" >&2; exit 1 ;;
         *) PARAMS="$PARAMS $1"; shift ;;
     esac
 done
@@ -171,7 +173,7 @@ test_for_ini() {
         fi
     fi
 
-    if [ $LOC_EXIT_STATUS -ne 0 ] && [ $LOC_EXIT_STATUS -gt $EXIT_STATUS ]; then
+    if [ $LOC_EXIT_STATUS -ne 0 ] && [ $LOC_EXIT_STATUS -gt "$EXIT_STATUS" ]; then
         EXIT_STATUS=$LOC_EXIT_STATUS
     fi
 
@@ -183,6 +185,7 @@ test_for_module() {
     if [ -n "${CUR_TEST_VAR}" ] && [ -n "${CUR_TEST_VAL}" ]; then
         LOC_EXIT_STATUS=0
         TEST_PASSED=1
+        # shellcheck disable=SC2126
         CONTAINER_VAL=$(echo "${DOCKER_TEST_EXT}" | grep "${CUR_TEST_VAR}" | wc -l)
 
         if [ "${CONTAINER_VAL}" != "${CUR_TEST_VAL}" ]; then
@@ -193,8 +196,8 @@ test_for_module() {
         [ $TEST_PASSED -eq 1 ] && TEST_PASSED_STR="\e[32mOK\e[39m" || TEST_PASSED_STR="\e[31mFAIL\e[39m"
         echo "Testing the expectation for module ${CUR_TEST_VAR}: ${TEST_PASSED_STR}"
         if [ $TEST_PASSED -ne 1 ]; then
-            [ ${CUR_TEST_VAL} -eq 0 ] && REQ_LOADED_STATE="not loaded" || REQ_LOADED_STATE="loaded"
-            [ ${CONTAINER_VAL} -eq 0 ] && ACT_LOADED_STATE="not loaded" || ACT_LOADED_STATE="loaded"
+            [ "${CUR_TEST_VAL}" -eq 0 ] && REQ_LOADED_STATE="not loaded" || REQ_LOADED_STATE="loaded"
+            [ "${CONTAINER_VAL}" -eq 0 ] && ACT_LOADED_STATE="not loaded" || ACT_LOADED_STATE="loaded"
             echo "Expected: ${REQ_LOADED_STATE} - Actual value: ${ACT_LOADED_STATE}"
             echo ""
         fi
@@ -215,7 +218,8 @@ test_for_header() {
 
         if [ -z "${CUR_TEST_VAL}" ]; then
             debug "Test that the header is not present"
-            if [ $(echo "${DOCKER_TEST_HEADERS}" | grep -i "^${CUR_TEST_VAR}: " | wc -l) -ne 0 ]; then
+            # shellcheck disable=SC2126
+            if [ "$(echo "${DOCKER_TEST_HEADERS}" | grep -i "^${CUR_TEST_VAR}: " | wc -l)" -ne 0 ]; then
                 TEST_PASSED=0
                 LOC_EXIT_STATUS=6
             fi
@@ -223,7 +227,8 @@ test_for_header() {
             debug "Test header value"
             CONTAINER_VAL=$(echo "${DOCKER_TEST_HEADERS}" | grep -i "^${CUR_TEST_VAR}: " | awk '{print $2}')
 
-            if [ $(echo "${CONTAINER_VAL}" | grep -E "${CUR_TEST_VAL}" | wc -l) -ne 1 ]; then
+            # shellcheck disable=SC2126
+            if [ "$(echo "${CONTAINER_VAL}" | grep -E "${CUR_TEST_VAL}" | wc -l)" -ne 1 ]; then
                 TEST_PASSED=0
                 LOC_EXIT_STATUS=6
             fi
@@ -277,7 +282,7 @@ test_for_user() {
         TEST_USER=""
         LOC_EXIT_STATUS=0
         TEST_PASSED=1
-        CONTAINER_VAL=$(docker exec ${CONTAINER_ID} ash -c "whoami 2>&1 | sed 's/whoami: //'")
+        CONTAINER_VAL=$(docker exec "${CONTAINER_ID}" ash -c "whoami 2>&1 | sed 's/whoami: //'")
 
         if [ "${CONTAINER_VAL}" != "${CUR_TEST_VAL}" ]; then
             TEST_PASSED=0
@@ -299,12 +304,12 @@ test_for_user() {
     return $LOC_EXIT_STATUS
 }
 
-if [ -z "$(docker images -q ${DOCKER_IMAGE})" ]; then
+if [ -z "$(docker images -q "${DOCKER_IMAGE}")" ]; then
     echo "Failed to find the docker image"
     exit 7
 fi
 
-if [ -z "$(docker images -q ${DOCKER_TEST_IMAGE})" ]; then
+if [ -z "$(docker images -q "${DOCKER_TEST_IMAGE}")" ]; then
     echo "Failed to find the docker test image"
     exit 8
 fi
@@ -312,20 +317,19 @@ fi
 EXIT_STATUS=0
 
 # Get "wait-for" script to wait until the docker image will be booted up
-curl -Ls -o ${BASE}/wait-for https://github.com/eficode/wait-for/releases/download/v${WAIT_FOR_VER}/wait-for && chmod +x ${BASE}/wait-for
+curl -Ls -o "${BASE}"/wait-for https://github.com/eficode/wait-for/releases/download/v${WAIT_FOR_VER}/wait-for && chmod +x "${BASE}"/wait-for
 
 process_docker_env
 RUNCMD="docker run ${DOCKER_ENV} -d -v ${PWD}/tests/php-test-scripts:/var/www/html ${DOCKER_IMAGE}"
 debug "Docker run command: ${RUNCMD}"
-CONTAINER_ID=$(${RUNCMD})
-if [ $? -ne 0 ]; then
+if ! CONTAINER_ID=$(${RUNCMD}); then
     echo "Failed to start the docker image"
     exit 9
 fi
-if [ ! "$(docker ps --no-trunc | grep ${CONTAINER_ID})" ]; then
+if ! docker ps --no-trunc | grep "${CONTAINER_ID}"; then
     echo ""
     echo "Failed to start the docker image, with the following errors:"
-    docker logs ${CONTAINER_ID}
+    docker logs "${CONTAINER_ID}"
     echo ""
     # docker rm -vf ${CONTAINER_ID}
     exit 9
@@ -333,19 +337,17 @@ fi
 
 debug "I will perform the tests on the container with id: ${CONTAINER_ID}"
 debug "Find the container IP address: docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_ID}"
-DOCKER_TEST_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${CONTAINER_ID})
-if [ $? -ne 0 ]; then
+if ! DOCKER_TEST_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${CONTAINER_ID}"); then
     echo "Failed to discover the IP address of the docker image"
     exit 10
 fi
 
 debug "Wait for container readiness (${DOCKER_TEST_IP}:${DOCKER_TEST_PORT})"
 debug "${BASE}/wait-for -t ${WAIT_FOR_TIMEOUT} ${DOCKER_TEST_IP}:${DOCKER_TEST_PORT}"
-${BASE}/wait-for -t ${WAIT_FOR_TIMEOUT} ${DOCKER_TEST_IP}:${DOCKER_TEST_PORT}
+"${BASE}"/wait-for -t ${WAIT_FOR_TIMEOUT} "${DOCKER_TEST_IP}":"${DOCKER_TEST_PORT}"
 
 debug "Get the INI output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_vars.php"
-DOCKER_TEST_INI=$(docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_vars.php)
-if [ $? -ne 0 ]; then
+if ! DOCKER_TEST_INI=$(docker run --rm "${DOCKER_TEST_IMAGE}" "${DOCKER_TEST_IP}" "${DOCKER_TEST_PORT}" /var/www/html/print_vars.php); then
     echo "Failed to get the ini data"
     exit 11
 fi
@@ -353,33 +355,31 @@ fi
 DOCKER_TEST_HEADERS=$(echo "${DOCKER_TEST_INI}" | awk -v 'RS=\n\r' '1;{exit}' | tr -d "\r")
 
 debug "Get the EXT output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_loaded_ext.php"
-DOCKER_TEST_EXT=$(docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_loaded_ext.php)
-if [ $? -ne 0 ]; then
+if ! DOCKER_TEST_EXT=$(docker run --rm "${DOCKER_TEST_IMAGE}" "${DOCKER_TEST_IP}" "${DOCKER_TEST_PORT}" /var/www/html/print_loaded_ext.php); then
     echo "Failed to get the extensions data"
     exit 12
 fi
 
 debug "Get the EXT FUNCTIONS output: docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_functions_ext.php"
-DOCKER_TEST_EXT_FUNCS=$(docker run --rm ${DOCKER_TEST_IMAGE} ${DOCKER_TEST_IP} ${DOCKER_TEST_PORT} /var/www/html/print_functions_ext.php)
-if [ $? -ne 0 ]; then
+if ! DOCKER_TEST_EXT_FUNCS=$(docker run --rm "${DOCKER_TEST_IMAGE}" "${DOCKER_TEST_IP}" "${DOCKER_TEST_PORT}" /var/www/html/print_functions_ext.php); then
     echo "Failed to get the extensions data"
     exit 12
 fi
 
-for line in $(grep -v '^#' ${SOURCE_FILE}); do
+while IFS= read -r line; do
     if [ -n "${line}" ]; then
         CUR_TEST_VAR=$(echo "${line}" | awk '{split($0,a,"="); print a[1]}')
         CUR_TEST_VAL=$(echo "${line}" | awk '{gsub(/"/,""); split($0,a,"="); print a[2]}')
 
-        if [ "$(echo ${CUR_TEST_VAR} | awk '$0 ~ /^MODULE_/ {print 1}')" = "1" ]; then
+        if [ "$(echo "${CUR_TEST_VAR}" | awk '$0 ~ /^MODULE_/ {print 1}')" = "1" ]; then
             CUR_TEST_VAR=$(echo "${CUR_TEST_VAR}" | awk '{gsub(/(MODULE_)|(_ENABLE)/,""); print tolower($0)}')
             debug "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is module test"
             test_for_module
-        elif [ "$(echo ${CUR_TEST_VAR} | awk '$0 ~ /^FUNCTION_/ {print 1}')" = "1" ]; then
+        elif [ "$(echo "${CUR_TEST_VAR}" | awk '$0 ~ /^FUNCTION_/ {print 1}')" = "1" ]; then
             CUR_TEST_VAR=$(echo "${CUR_TEST_VAR}" | awk '{gsub(/(FUNCTION_)/,""); print tolower($0)}')
             debug "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is function test"
             test_for_function
-        elif [ "$(echo ${CUR_TEST_VAR} | awk '$0 ~ /^HEADER_/ {print 1}')" = "1" ]; then
+        elif [ "$(echo "${CUR_TEST_VAR}" | awk '$0 ~ /^HEADER_/ {print 1}')" = "1" ]; then
             CUR_TEST_VAR=$(echo "${CUR_TEST_VAR}" | awk '{gsub(/(HEADER_)/,""); print tolower($0)}')
             debug "${CUR_TEST_VAR} equal to ${CUR_TEST_VAL} and this is header test"
             test_for_header
@@ -390,7 +390,7 @@ for line in $(grep -v '^#' ${SOURCE_FILE}); do
             test_for_ini
         fi
     fi
-done
+done < <(grep -v '^#' "${SOURCE_FILE}")
 
 if [ -n "${TEST_USER}" ]; then
     CUR_TEST_VAL="${TEST_USER}"
@@ -398,7 +398,7 @@ if [ -n "${TEST_USER}" ]; then
 fi
 
 debug "Docker stop command: docker stop ${CONTAINER_ID} >/dev/null 2>&1"
-docker stop ${CONTAINER_ID} >/dev/null 2>&1
+docker stop "${CONTAINER_ID}" >/dev/null 2>&1
 
 if [ $EXIT_STATUS -eq 0 ]; then
     echo "\e[32mSUCCESS, all tests passed\e[39m"
