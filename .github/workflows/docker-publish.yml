@@ -2,10 +2,10 @@ name: Docker
 on:
   push:
     branches:
-    - 'master'
+      - "master"
   pull_request:
     branches:
-    - 'master'
+      - "master"
 
 env:
   IMAGE_NAME: docker-php-base-image
@@ -15,12 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tag:
-          [
-            7-1-12,
-            7-1-11
-          ]
-        flavour: [ "", "-rootless" ]
+        tag: [7-1-12, 7-1-11]
+        flavour: ["", "-rootless"]
     steps:
       - uses: actions/checkout@v2
 
@@ -39,12 +35,8 @@ jobs:
     if: github.ref == 'refs/heads/master'
     strategy:
       matrix:
-        tag:
-          [
-            7.1.11-fpm-alpine3.4,
-            7.1.12-fpm-alpine3.4
-          ]
-        flavour: [ "", "-rootless" ]
+        tag: [7.1.11-fpm-alpine3.4, 7.1.12-fpm-alpine3.4]
+        flavour: ["", "-rootless"]
     steps:
       - uses: actions/checkout@v2
 
@@ -77,7 +69,9 @@ jobs:
       matrix:
         tag:
           [
+            8-1-5,
             8-0-8,
+            7-4-29,
             7-4-26,
             7-4-20,
             7-4-16,
@@ -86,9 +80,9 @@ jobs:
             7-2-25,
             7-2-0,
             7-1-29,
-            7-1-22
+            7-1-22,
           ]
-        flavour: [ "", "-rootless" ]
+        flavour: ["", "-rootless"]
     steps:
       - uses: actions/checkout@v2
 
@@ -118,9 +112,11 @@ jobs:
             7.4.16-fpm-alpine3.13,
             7.4.20-fpm-alpine3.13,
             7.4.26-fpm-alpine3.15,
-            8.0.8-fpm-alpine3.13
+            7.4.29-fpm-alpine3.15,
+            8.0.8-fpm-alpine3.13,
+            8.1.5-fpm-alpine3.15,
           ]
-        flavour: [ "", "-rootless" ]
+        flavour: ["", "-rootless"]
     steps:
       - uses: actions/checkout@v2
 
@@ -136,20 +132,39 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
+      - name: Guess the PHP configuration folder
+        run: |
+
       - name: Build and push images to GitHub Container Registry
         if: ${{ matrix.flavour == '' }}
         run: |
+          # Guess the folder for the php configuration
+          BASE_FOLDER=$(./scripts/guess_folder.sh "${{ matrix.tag }}")
+          if [ ! -d "$BASE_FOLDER" ]; then
+            echo "Fail to guess the configuration folder"
+            exit 1
+          fi
+
+          # Build process
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
           # Change all uppercase to lowercase.
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           echo IMAGE_ID=$IMAGE_ID
-          docker buildx build --push ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --tag $IMAGE_ID:${{ matrix.tag }}
+          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVERSION=${{ matrix.tag }} --tag $IMAGE_ID:${{ matrix.tag }}
 
       - name: Build and push images to GitHub Container Registry (rootless)
         if: ${{ matrix.flavour == '-rootless' }}
         run: |
+          # Guess the folder for the php configuration
+          BASE_FOLDER=$(./scripts/guess_folder.sh "${{ matrix.tag }}")
+          if [ ! -d "$BASE_FOLDER" ]; then
+            echo "Fail to guess the configuration folder"
+            exit 1
+          fi
+
+          # Build process
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
           # Change all uppercase to lowercase.
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           echo IMAGE_ID=$IMAGE_ID
-          docker buildx build --push ./${{ matrix.tag }} --platform "linux/amd64,linux/arm64" --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless
+          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVERSION=${{ matrix.tag }} --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless

@@ -1,12 +1,12 @@
 FROM golang:1.16.6-alpine3.14 as mailhog
 
 # Install mailhog.
-ENV MAILHOG_VERSION 1.0.1
+ENV MAILHOG_VERSION 0.2.1
 RUN apk add git && \
     go get github.com/mailhog/MailHog@v${MAILHOG_VERSION} && \
     mv /go/bin/MailHog /go/mailhog
 
-FROM php:8.0.8-fpm-alpine3.13
+FROM php:7.4.29-fpm-alpine3.15
 
 # Build target arch passed by BuildKit
 ARG TARGETARCH
@@ -14,7 +14,7 @@ ARG TARGETARCH
 # Pass inexistent UUID (e.g.: 1001) to enhance the container security
 ARG user=root
 
-# Default php configurations values.
+# Default php configurations values.
 ENV PHP_MEMORY_LIMIT 64M
 ENV PHP_TIMEZONE=Europe/Rome
 ENV PHP_REALPATH_CACHE_SIZE 2M
@@ -35,7 +35,7 @@ ENV PHP_FPM_PM_STATUS_PATH /status
 
 ENV XDEBUG_VERSION 3.1.2
 ENV MEMCACHE_VERSION 3.1.5
-ENV PHPREDIS_VERSION 5.3.4
+ENV PHPREDIS_VERSION 5.1.1
 ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev ldb-dev libldap openldap-dev
 RUN apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} gettext && \
@@ -55,21 +55,17 @@ RUN apk add --no-cache --virtual .phpize-deps-configure $PHPIZE_DEPS && \
     apk del .phpize-deps-configure
 
 # Install blackfire client.
-ENV BLACKFIRE_CLIENT_VERSION 2.4.3
+ENV BLACKFIRE_CLIENT_VERSION 2.5.2
 RUN mkdir -p /tmp/blackfire && \
     curl -A "Docker" -L https://packages.blackfire.io/binaries/blackfire/${BLACKFIRE_CLIENT_VERSION}/blackfire-linux_${TARGETARCH}.tar.gz | tar zxp -C /tmp/blackfire && \
     mv /tmp/blackfire/blackfire /usr/bin/blackfire && \
     rm -Rf /tmp/blackfire
 
 # Install blackfire probe.
-RUN version=$(php -r "echo PHP_MAJOR_VERSION.PHP_MINOR_VERSION;") \
-    && architecture=$(uname -m) \
-    && curl -A "Docker" -o /tmp/blackfire-probe.tar.gz -D - -L -s https://blackfire.io/api/v1/releases/probe/php/alpine/$architecture/$version \
-    && mkdir -p /tmp/blackfire \
-    && tar zxpf /tmp/blackfire-probe.tar.gz -C /tmp/blackfire \
-    && mv /tmp/blackfire/blackfire-*.so $(php -r "echo ini_get ('extension_dir');")/blackfire.so \
-    && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://\${BLACKFIRE_HOST}:${BLACKFIRE_PORT}\nblackfire.apm_enabled=\${BLACKFIRE_APM_ENABLED}\n" > $PHP_INI_DIR/conf.d/blackfire.ini \
-    && rm -rf /tmp/blackfire /tmp/blackfire-probe.tar.gz
+ENV BLACKFIRE_PROBE_VERSION 1.71.0
+RUN curl -A "Docker" -o /tmp/blackfire-php-alpine_${TARGETARCH}-php-74.so -D - -L -s https://packages.blackfire.io/binaries/blackfire-php/${BLACKFIRE_PROBE_VERSION}/blackfire-php-alpine_${TARGETARCH}-php-74.so \
+    && mv /tmp/blackfire-*.so $(php -r "echo ini_get('extension_dir');")/blackfire.so \
+    && printf "extension=blackfire.so\nblackfire.agent_socket=tcp://\${BLACKFIRE_HOST}:${BLACKFIRE_PORT}\nblackfire.apm_enabled=\${BLACKFIRE_APM_ENABLED}\n" > $PHP_INI_DIR/conf.d/blackfire.ini
 
 # Copy mailhog from golang image.
 COPY --from=mailhog /go/mailhog /usr/local/bin/mailhog
