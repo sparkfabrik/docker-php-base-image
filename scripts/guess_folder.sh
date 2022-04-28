@@ -1,7 +1,7 @@
 #!/bin/sh
 # shellcheck disable=SC3040
 
-set -uo pipefail
+set -u
 
 # This script returns the base folder for the desired PHP version.
 # It tryes to find the corresponding folder in the filesystem, using this precedence:
