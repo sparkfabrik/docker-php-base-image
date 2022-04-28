@@ -97,27 +97,25 @@ build-7-4-29-rootless: build-test-image
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:7.4.29-fpm-alpine3.15-rootless "unknown uid 1001"
 
 build-8-0-8: PHPVER=8.0.8-fpm-alpine3.13
-build-8-0-8: FOLDER=8
 build-8-0-8: build-template
 
 build-8-0-8-rootless: PHPVER=8.0.8-fpm-alpine3.13
-build-8-0-8-rootless: FOLDER=8
 build-8-0-8-rootless: build-rootless-template
 
 build-8-1-5: PHPVER=8.1.5-fpm-alpine3.15
-build-8-1-5: FOLDER=8
 build-8-1-5: build-template
 
 build-8-1-5-rootless: PHPVER=8.1.5-fpm-alpine3.15
-build-8-1-5-rootless: FOLDER=8
 build-8-1-5-rootless: build-rootless-template
 
 build-template: guessing-folder build-test-image
-	docker buildx build --load -t sparkfabrik/docker-php-base-image:$(PHPVER) --build-arg PHPVER=$(PHPVER) $(FOLDER)
+	@chmod +x ./scripts/guess_folder.sh
+	docker buildx build --load -t sparkfabrik/docker-php-base-image:$(PHPVER) --build-arg PHPVER=$(PHPVER) $(shell ./scripts/guess_folder.sh "$(PHPVER)")
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:$(PHPVER) root
 
 build-rootless-template: guessing-folder build-test-image
-	docker buildx build --load -t sparkfabrik/docker-php-base-image:$(PHPVER)-rootless --build-arg PHPVER=$(PHPVER) --build-arg user=1001 $(FOLDER)
+	@chmod +x ./scripts/guess_folder.sh
+	docker buildx build --load -t sparkfabrik/docker-php-base-image:$(PHPVER)-rootless --build-arg PHPVER=$(PHPVER) --build-arg user=1001 $(shell ./scripts/guess_folder.sh "$(PHPVER)")
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:$(PHPVER)-rootless "unknown uid 1001"
 
 guessing-folder:
