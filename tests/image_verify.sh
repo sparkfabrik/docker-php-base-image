@@ -401,8 +401,8 @@ debug "Docker stop command: docker stop ${CONTAINER_ID} >/dev/null 2>&1"
 docker stop "${CONTAINER_ID}" >/dev/null 2>&1
 
 if [ $EXIT_STATUS -eq 0 ]; then
-    echo "\e[32mSUCCESS, all tests passed\e[39m"
+    echo -e "\e[32mSUCCESS, all tests passed\e[39m"
 else
-    echo "\e[31mFAIL, some tests failed\e[39m"
+    echo -e "\e[31mFAIL, some tests failed\e[39m"
 fi
 exit $EXIT_STATUS
