@@ -124,16 +124,21 @@ jobs:
         run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Check directory and Dockerfile
-        run: test -d ${{ matrix.tag }} && test -f ${{ matrix.tag }}/Dockerfile
+        run: |
+          # Guess the folder for the php configuration
+          BASE_FOLDER=$(./scripts/guess_folder.sh "${{ matrix.tag }}")
+          if [ ! -d "$BASE_FOLDER" ]; then
+            echo "Fail to guess the configuration folder"
+            exit 1
+          fi
+
+          test -d $BASE_FOLDER && test -f $BASE_FOLDER/Dockerfile
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-
-      - name: Guess the PHP configuration folder
-        run: |
 
       - name: Build and push images to GitHub Container Registry
         if: ${{ matrix.flavour == '' }}
@@ -150,7 +155,7 @@ jobs:
           # Change all uppercase to lowercase.
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           echo IMAGE_ID=$IMAGE_ID
-          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVERSION=${{ matrix.tag }} --tag $IMAGE_ID:${{ matrix.tag }}
+          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --tag $IMAGE_ID:${{ matrix.tag }}
 
       - name: Build and push images to GitHub Container Registry (rootless)
         if: ${{ matrix.flavour == '-rootless' }}
@@ -167,4 +172,4 @@ jobs:
           # Change all uppercase to lowercase.
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           echo IMAGE_ID=$IMAGE_ID
-          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVERSION=${{ matrix.tag }} --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless
+          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless

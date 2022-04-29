@@ -31,21 +31,26 @@ PHPVER="${1}"
 # Guessing folder
 # Full version (x.y.z<suffix>)
 DIR="./${PHPVER}"
-if [ ! -d "$DIR" ]; then
+if [ ! -d "${DIR}" ]; then
   # Full semver (x.y.z)
   DIR="./$(echo "${PHPVER}" | sed -n 's|\([[:digit:]]*\)\.\([[:digit:]]*\)\.\([[:digit:]]*\).*|\1.\2.\3|p')"
-  if [ ! -d "$DIR" ]; then
+  if [ ! -d "${DIR}" ]; then
     # major.minor (x.y)
     DIR="./$(echo "${PHPVER}" | sed -n 's|\([[:digit:]]*\)\.\([[:digit:]]*\)\.\([[:digit:]]*\).*|\1.\2|p')"
-    if [ ! -d "$DIR" ]; then
+    if [ ! -d "${DIR}" ]; then
       # Only major (x)
       DIR="./$(echo "${PHPVER}" | sed -n 's|\([[:digit:]]*\)\.\([[:digit:]]*\)\.\([[:digit:]]*\).*|\1|p')"
-      if [ ! -d "$DIR" ]; then
+      if [ ! -d "${DIR}" ]; then
         echo "There is no a valid folder for this PHP version"
         exit 1
       fi
     fi
   fi
+fi
+
+if [ ! -d "${DIR}" ] || [ ! -f "${DIR}/Dockerfile" ]; then
+  echo "There folder does not exists or the Dockerfile is missing"
+  exit 4
 fi
 
 echo "${DIR}"
