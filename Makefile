@@ -108,6 +108,12 @@ build-8-1-5: build-template
 build-8-1-5-rootless: PHPVER=8.1.5-fpm-alpine3.15
 build-8-1-5-rootless: build-rootless-template
 
+build-8-1-10: PHPVER=8.1.10-fpm-alpine3.16
+build-8-1-10: build-template
+
+build-8-1-10-rootless: PHPVER=8.1.10-fpm-alpine3.16
+build-8-1-10-rootless: build-rootless-template
+
 build-template: guessing-folder build-test-image
 	@chmod +x ./scripts/guess_folder.sh
 	docker buildx build --load -t sparkfabrik/docker-php-base-image:$(PHPVER) --build-arg PHPVER=$(PHPVER) $(shell ./scripts/guess_folder.sh "$(PHPVER)")
