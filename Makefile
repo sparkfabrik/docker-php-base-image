@@ -102,6 +102,12 @@ build-7-4-30: build-template
 build-7-4-30-rootless: PHPVER=7.4.30-fpm-alpine3.16
 build-7-4-30-rootless: build-rootless-template
 
+build-7-4-32: PHPVER=7.4.32-fpm-alpine3.16
+build-7-4-32: build-template
+
+build-7-4-32-rootless: PHPVER=7.4.32-fpm-alpine3.16
+build-7-4-32-rootless: build-rootless-template
+
 build-8-0-8: PHPVER=8.0.8-fpm-alpine3.13
 build-8-0-8: build-template
 
