@@ -17,9 +17,12 @@ jobs:
       matrix:
         tag:
           [
+            8-1-12,
             8-1-10,
             8-1-5,
             8-0-8,
+            7-4-33,
+            7-4-32,
             7-4-30,
             7-4-29,
             7-4-26,
@@ -27,7 +30,6 @@ jobs:
             7-4-16,
             7-4-6,
             7-3-24,
-            7-4-32,
           ]
         flavour: ["", "-rootless"]
     steps:
@@ -58,9 +60,11 @@ jobs:
             7.4.29-fpm-alpine3.15,
             7.4.30-fpm-alpine3.16,
             7.4.32-fpm-alpine3.16,
+            7.4.33-fpm-alpine3.16,
             8.0.8-fpm-alpine3.13,
             8.1.5-fpm-alpine3.15,
             8.1.10-fpm-alpine3.16,
+            8.1.12-fpm-alpine3.16,
           ]
         flavour: ["", "-rootless"]
     steps:
