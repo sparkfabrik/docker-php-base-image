@@ -108,6 +108,12 @@ build-7-4-32: build-template
 build-7-4-32-rootless: PHPVER=7.4.32-fpm-alpine3.16
 build-7-4-32-rootless: build-rootless-template
 
+build-7-4-33: PHPVER=7.4.33-fpm-alpine3.16
+build-7-4-33: build-template
+
+build-7-4-33-rootless: PHPVER=7.4.33-fpm-alpine3.16
+build-7-4-33-rootless: build-rootless-template
+
 build-8-0-8: PHPVER=8.0.8-fpm-alpine3.13
 build-8-0-8: build-template
 
@@ -125,6 +131,12 @@ build-8-1-10: build-template
 
 build-8-1-10-rootless: PHPVER=8.1.10-fpm-alpine3.16
 build-8-1-10-rootless: build-rootless-template
+
+build-8-1-12: PHPVER=8.1.12-fpm-alpine3.16
+build-8-1-12: build-template
+
+build-8-1-12-rootless: PHPVER=8.1.12-fpm-alpine3.16
+build-8-1-12-rootless: build-rootless-template
 
 build-template: guessing-folder build-test-image
 	@chmod +x ./scripts/guess_folder.sh
