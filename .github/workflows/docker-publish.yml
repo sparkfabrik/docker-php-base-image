@@ -33,13 +33,13 @@ jobs:
           ]
         flavour: ["", "-rootless"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: Build and test the image
         run: make build-${{ matrix.tag }}${{ matrix.flavour }}
@@ -68,7 +68,7 @@ jobs:
           ]
         flavour: ["", "-rootless"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
@@ -85,10 +85,10 @@ jobs:
           test -d $BASE_FOLDER && test -f $BASE_FOLDER/Dockerfile
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: Build and push images to GitHub Container Registry
         if: ${{ matrix.flavour == '' }}
