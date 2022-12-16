@@ -115,6 +115,7 @@ process_docker_env() {
 }
 
 begins_with_dash() {
+    # shellcheck disable=SC2317
     case $1 in "-"*) true;; *) false;; esac;
 }
 
