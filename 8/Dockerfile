@@ -8,7 +8,7 @@ RUN apk add git && \
     go get github.com/mailhog/MailHog@v${MAILHOG_VERSION} && \
     mv /go/bin/MailHog /go/mailhog
 
-FROM php:$PHPVER
+FROM php:$PHPVER as dist
 
 # Build target arch passed by BuildKit
 ARG TARGETARCH
@@ -35,19 +35,20 @@ ENV PHP_FPM_MIN_SPARE_SERVERS 1
 ENV PHP_FPM_MAX_SPARE_SERVERS 3
 ENV PHP_FPM_PM_STATUS_PATH /status
 
-ENV XDEBUG_VERSION 3.1.4
+ENV XDEBUG_VERSION 3.2.0
 ENV MEMCACHE_VERSION 3.2.0
 ENV PHPREDIS_VERSION 5.3.7
 ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev ldb-dev libldap openldap-dev
-RUN apk update && \
-    apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} gettext && \
+RUN export XDEBUG_DEPS="linux-headers" && \
+    apk update && \
+    apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} ${XDEBUG_DEPS} gettext && \
     docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include && \
     docker-php-ext-configure ldap && \
     docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip ldap && \
     pecl install xdebug-${XDEBUG_VERSION} && \
     pecl install redis-${PHPREDIS_VERSION} && \
     pecl install igbinary memcached-${MEMCACHE_VERSION} --disable-memcached-sasl && \
-    apk del ${PHPIZE_DEPS} && \
+    apk del ${PHPIZE_DEPS} ${XDEBUG_DEPS} && \
     rm -rf /var/cache/apk/*
 
 # Install APCu.
