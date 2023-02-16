@@ -1,5 +1,5 @@
 <?php
 
 foreach (get_loaded_extensions() as $ext) {
-  echo "${ext}\n";
+  echo "{$ext}\n";
 }
