@@ -8,7 +8,7 @@ export PHP_DISPLAY_ERRORS="${PHP_DISPLAY_ERRORS:-0}"
 export PHP_DISPLAY_STARTUP_ERRORS="${PHP_DISPLAY_STARTUP_ERRORS:-0}"
 
 # Services.
-export MAILHOG_ENABLE="${MAILHOG_ENABLE:-0}"
+export MAILHOG_ENABLE="${MAILHOG_ENABLE:-1}"
 export MEMCACHED_ENABLE="${MEMCACHED_ENABLE:-0}"
 export REDIS_ENABLE="${REDIS_ENABLE:-0}"
 export XDEBUG_ENABLE="${XDEBUG_ENABLE:-0}"
@@ -17,7 +17,6 @@ export LDAP_ENABLE="${LDAP_ENABLE:-0}"
 # Services configurations.
 export MAILHOG_HOST="${MAILHOG_HOST:-"mail"}"
 export MAILHOG_PORT="${MAILHOG_PORT:-1025}"
-export APCU_ENABLE="${APCU_ENABLE:-1}"
 
 # Blackfire configurations.
 export BLACKFIRE_APM_ENABLED="${BLACKFIRE_APM_ENABLED:-0}"
@@ -48,12 +47,6 @@ fi
 
 if [ "${LDAP_ENABLE}" = "0" ]; then
 	rm -f /usr/local/etc/php/conf.d/docker-php-ext-ldap.ini || true
-fi
-
-if [ "${APCU_ENABLE}" = "1" ]; then
-	cp /usr/local/etc/php/conf.disabled/apcu.ini /usr/local/etc/php/conf.d/apcu.ini
-else
-	rm -f /usr/local/etc/php/conf.d/apcu.ini || true
 fi
 
 # php-fpm template env subst.
