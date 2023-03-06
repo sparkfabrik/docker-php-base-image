@@ -1,5 +1,7 @@
 .PHONY: shellcheck
 
+COMPOSER_VERSION ?= 2.5.4
+
 # build-7-1-11: build-test-image
 # 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.1.11-fpm-alpine3.4 7.1.11-fpm-alpine3.4
 # 	./tests/tests_wrapper.sh php7/mailhog_enabled sparkfabrik/docker-php-base-image:7.1.11-fpm-alpine3.4 root
@@ -152,17 +154,44 @@ build-8-2-3-rootless: build-rootless-template
 
 
 build-template: guessing-folder build-test-image
-	@chmod +x ./scripts/guess_folder.sh
-	docker buildx build --load -t sparkfabrik/docker-php-base-image:$(PHPVER) --build-arg PHPVER=$(PHPVER) $(shell ./scripts/guess_folder.sh "$(PHPVER)")
+	docker buildx build \
+		--load \
+		--build-arg PHPVER=$(PHPVER) \
+		--target dist \
+		-t sparkfabrik/docker-php-base-image:$(PHPVER) \
+		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(shell ./scripts/guess_folder.sh "$(PHPVER)")
+	docker buildx build \
+		--load \
+		--build-arg PHPVER=$(PHPVER) \
+		--build-arg COMPOSER_VERSION="$(COMPOSER_VERSION)" \
+		--target dev \
+		-t sparkfabrik/docker-php-base-image:$(PHPVER)-dev \
+		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(shell ./scripts/guess_folder.sh "$(PHPVER)")
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:$(PHPVER) root
 
 build-rootless-template: guessing-folder build-test-image
-	@chmod +x ./scripts/guess_folder.sh
-	docker buildx build --load -t sparkfabrik/docker-php-base-image:$(PHPVER)-rootless --build-arg PHPVER=$(PHPVER) --build-arg user=1001 $(shell ./scripts/guess_folder.sh "$(PHPVER)")
+	docker buildx build \
+		--load \
+		--build-arg PHPVER=$(PHPVER) \
+		--build-arg user=1001 \
+		--target dist \
+		-t sparkfabrik/docker-php-base-image:$(PHPVER)-rootless \
+		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(shell ./scripts/guess_folder.sh "$(PHPVER)")
+	docker buildx build \
+		--load \
+		--build-arg PHPVER=$(PHPVER) \
+		--build-arg user=1001 \
+		--build-arg COMPOSER_VERSION="$(COMPOSER_VERSION)" \
+		--target dev \
+		-t sparkfabrik/docker-php-base-image:$(PHPVER)-rootless-dev \
+		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(shell ./scripts/guess_folder.sh "$(PHPVER)")
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:$(PHPVER)-rootless "unknown uid 1001"
 
 guessing-folder:
-	@chmod +x ./scripts/guess_folder.sh
 	@echo "The folder used to build the docker image is: $(shell ./scripts/guess_folder.sh "$(PHPVER)")"
 
 build-test-image:

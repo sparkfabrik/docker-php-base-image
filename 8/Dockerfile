@@ -38,8 +38,8 @@ ENV PHP_FPM_PM_STATUS_PATH /status
 ENV XDEBUG_VERSION 3.2.0
 ENV MEMCACHE_VERSION 3.2.0
 ENV PHPREDIS_VERSION 5.3.7
-ENV PHP_EXTRA_DEPS libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev ldb-dev libldap openldap-dev
 RUN export XDEBUG_DEPS="linux-headers" && \
+    export PHP_EXTRA_DEPS="libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev ldb-dev libldap openldap-dev" && \
     apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} ${XDEBUG_DEPS} gettext && \
     docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include && \
@@ -98,3 +98,30 @@ USER $user
 
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD ["php-fpm"]
+
+FROM dist as dev
+
+# Build target arch passed by BuildKit
+ARG TARGETARCH
+
+# Pass inexistent UUID (e.g.: 1001) to enhance the container security
+ARG user=root
+
+ARG COMPOSER_VERSION
+
+USER root
+
+ENV COMPOSER_MEMORY_LIMIT -1
+ENV COMPOSER_HOME /composer-libs
+
+RUN apk add --no-cache patch rsync git
+
+RUN mkdir $COMPOSER_HOME \
+    && chmod -R 775 $COMPOSER_HOME \
+    && curl -L -o /usr/local/bin/composer https://github.com/composer/composer/releases/download/${COMPOSER_VERSION}/composer.phar \
+    && chmod +x /usr/local/bin/composer \
+    && echo "PS1='\[\033[1;36m\]\u\[\033[1;31m\]@\[\033[1;32m\]\h:\[\033[1;35m\]\w\[\033[1;31m\]\$\[\033[0m\] '" >> /etc/profile \
+    && echo "export TERM=xterm" >> /etc/profile
+
+# Go to target user
+USER $user

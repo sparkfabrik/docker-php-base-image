@@ -9,6 +9,7 @@ on:
 
 env:
   IMAGE_NAME: docker-php-base-image
+  COMPOSER_VERSION: ${{ vars.COMPOSER_VERSION }}
 
 jobs:
   test-no-multiarch:
@@ -138,7 +139,8 @@ jobs:
           # Change all uppercase to lowercase.
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           echo IMAGE_ID=$IMAGE_ID
-          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --tag $IMAGE_ID:${{ matrix.tag }}
+          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --tag $IMAGE_ID:${{ matrix.tag }} --target dist
+          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --tag $IMAGE_ID:${{ matrix.tag }}-dev --target dev --build-arg COMPOSER_VERSION="${COMPOSER_VERSION}"
 
       - name: Build and push images to GitHub Container Registry (rootless)
         if: ${{ matrix.flavour == '-rootless' }}
@@ -155,4 +157,5 @@ jobs:
           # Change all uppercase to lowercase.
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
           echo IMAGE_ID=$IMAGE_ID
-          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless
+          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless --target dist
+          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless-dev --target dev --build-arg COMPOSER_VERSION="${COMPOSER_VERSION}"
