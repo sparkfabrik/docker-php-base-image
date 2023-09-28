@@ -57,6 +57,11 @@ else
 fi
 
 # php-fpm template env subst.
-envsubst < /templates/zz2-docker-custom.conf > /usr/local/etc/php-fpm.d/zz2-docker-custom.conf
+envsubst </templates/zz2-docker-custom.conf >/usr/local/etc/php-fpm.d/zz2-docker-custom.conf
+
+# If the environment is not local, we enable structured logging.
+if [ "${ENV:-}" != "loc" ]; then
+	envsubst </templates/zz3-structured-logs.conf >/usr/local/etc/php-fpm.d/zz3-structured-logs.conf
+fi
 
 exec "$@"
