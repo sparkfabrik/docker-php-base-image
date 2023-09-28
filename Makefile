@@ -10,9 +10,9 @@ COMPOSER_VERSION ?= 2.5.4
 # 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.1.11-fpm-alpine3.4-rootless --build-arg user=1001 7.1.11-fpm-alpine3.4
 # 	./tests/tests_wrapper.sh php7/mailhog_enabled sparkfabrik/docker-php-base-image:7.1.11-fpm-alpine3.4-rootless "unknown uid 1001"
 #
-build-7-1-12: build-test-image
-	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.1.12-fpm-alpine3.4 7.1.12-fpm-alpine3.4
-	./tests/tests_wrapper.sh php7/mailhog_enabled sparkfabrik/docker-php-base-image:7.1.12-fpm-alpine3.4 root
+# build-7-1-12: build-test-image
+# 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.1.12-fpm-alpine3.4 7.1.12-fpm-alpine3.4
+# 	./tests/tests_wrapper.sh php7/mailhog_enabled sparkfabrik/docker-php-base-image:7.1.12-fpm-alpine3.4 root
 #
 # build-7-1-12-rootless: build-test-image
 # 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.1.12-fpm-alpine3.4-rootless --build-arg user=1001 7.1.12-fpm-alpine3.4
