@@ -134,11 +134,11 @@ COMPOSER_VERSION ?= 2.5.4
 # build-8-1-12-rootless: PHPVER=8.1.12-fpm-alpine3.16
 # build-8-1-12-rootless: build-rootless-template
 
-build-8-1-10: PHPVER=8.1.10-fpm-alpine3.16
-build-8-1-10: build-template
+# build-8-1-10: PHPVER=8.1.10-fpm-alpine3.16
+# build-8-1-10: build-template
 
-build-8-1-10-rootless: PHPVER=8.1.10-fpm-alpine3.16
-build-8-1-10-rootless: build-rootless-template
+# build-8-1-10-rootless: PHPVER=8.1.10-fpm-alpine3.16
+# build-8-1-10-rootless: build-rootless-template
 
 build-8-1-16: PHPVER=8.1.16-fpm-alpine3.16
 build-8-1-16: build-template
@@ -151,6 +151,12 @@ build-8-2-3: build-template
 
 build-8-2-3-rootless: PHPVER=8.2.3-fpm-alpine3.16
 build-8-2-3-rootless: build-rootless-template
+
+build-8-3-2: PHPVER=8.3.2-fpm-alpine3.18
+build-8-3-2: build-template
+
+build-8-3-2-rootless: PHPVER=8.3.2-fpm-alpine3.18
+build-8-3-2-rootless: build-rootless-template
 
 
 build-template: guessing-folder build-test-image
