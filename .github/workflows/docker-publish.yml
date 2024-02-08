@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tag: [8-2-3, 8-1-16, 8-1-10]
+        tag: [8-3-2, 8-2-3, 8-1-16]
         flavour: ["", "-rootless"]
     steps:
       - uses: actions/checkout@v3
@@ -36,8 +36,7 @@ jobs:
     if: github.ref == 'refs/heads/master'
     strategy:
       matrix:
-        tag:
-          [8.1.10-fpm-alpine3.16, 8.1.16-fpm-alpine3.16, 8.2.3-fpm-alpine3.16]
+        tag: [8.3.2-fpm-alpine3.18, 8.2.3-fpm-alpine3.16, 8.1.16-fpm-alpine3.16]
         flavour: ["", "-rootless"]
     steps:
       - uses: actions/checkout@v3

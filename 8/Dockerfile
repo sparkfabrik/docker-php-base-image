@@ -1,11 +1,11 @@
 ARG PHPVER
 
-FROM golang:1.16.6-alpine3.14 as mailhog
+FROM golang:1.22.0-alpine3.18 as mailhog
 
 # Install mailhog.
 ENV MAILHOG_VERSION 1.0.1
 RUN apk add git && \
-    go get github.com/mailhog/MailHog@v${MAILHOG_VERSION} && \
+    go install github.com/mailhog/MailHog@v${MAILHOG_VERSION} && \
     mv /go/bin/MailHog /go/mailhog
 
 FROM php:$PHPVER as dist
@@ -35,7 +35,7 @@ ENV PHP_FPM_MIN_SPARE_SERVERS 1
 ENV PHP_FPM_MAX_SPARE_SERVERS 3
 ENV PHP_FPM_PM_STATUS_PATH /status
 
-ENV XDEBUG_VERSION 3.2.0
+ENV XDEBUG_VERSION 3.3.1
 ENV MEMCACHE_VERSION 3.2.0
 ENV PHPREDIS_VERSION 5.3.7
 RUN export XDEBUG_DEPS="linux-headers" && \
