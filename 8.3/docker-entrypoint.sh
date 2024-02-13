@@ -1,0 +1,67 @@
+#!/bin/sh
+export PHP_MEMORY_LIMIT="${PHP_MEMORY_LIMIT:-"128M"}"
+export PHP_TIMEZONE="${PHP_TIMEZONE:-"Europe/Rome"}"
+export PHP_OPCACHE_ENABLE="${PHP_OPCACHE_ENABLE:-1}"
+export PHP_OPCACHE_MEMORY="${PHP_OPCACHE_MEMORY:-64}"
+export PHP_MAX_INPUT_VARS="${PHP_MAX_INPUT_VARS:-3000}"
+export PHP_DISPLAY_ERRORS="${PHP_DISPLAY_ERRORS:-0}"
+export PHP_DISPLAY_STARTUP_ERRORS="${PHP_DISPLAY_STARTUP_ERRORS:-0}"
+
+# Services.
+export MAILHOG_ENABLE="${MAILHOG_ENABLE:-0}"
+export MEMCACHED_ENABLE="${MEMCACHED_ENABLE:-0}"
+export REDIS_ENABLE="${REDIS_ENABLE:-0}"
+export XDEBUG_ENABLE="${XDEBUG_ENABLE:-0}"
+export LDAP_ENABLE="${LDAP_ENABLE:-0}"
+
+# Services configurations.
+export MAILHOG_HOST="${MAILHOG_HOST:-"mail"}"
+export MAILHOG_PORT="${MAILHOG_PORT:-1025}"
+export APCU_ENABLE="${APCU_ENABLE:-1}"
+
+# Blackfire configurations.
+export BLACKFIRE_APM_ENABLED="${BLACKFIRE_APM_ENABLED:-0}"
+
+if [ "${MEMCACHED_ENABLE}" = "1" ]; then
+	cp /usr/local/etc/php/conf.disabled/memcached.ini /usr/local/etc/php/conf.d/memcached.ini
+else
+	rm -f /usr/local/etc/php/conf.d/memcached.ini || true
+fi
+
+if [ "${REDIS_ENABLE}" = "1" ]; then
+	cp /usr/local/etc/php/conf.disabled/redis.ini /usr/local/etc/php/conf.d/redis.ini
+else
+	rm -f /usr/local/etc/php/conf.d/redis.ini || true
+fi
+
+if [ "${MAILHOG_ENABLE}" = "1" ]; then
+	cp /usr/local/etc/php/conf.disabled/mailhog.ini /usr/local/etc/php/conf.d/mailhog.ini
+else
+	rm -f /usr/local/etc/php/conf.d/mailhog.ini || true
+fi
+
+if [ "${XDEBUG_ENABLE}" = "1" ]; then
+	cp /usr/local/etc/php/conf.disabled/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
+else
+	rm -f /usr/local/etc/php/conf.d/xdebug.ini || true
+fi
+
+if [ "${LDAP_ENABLE}" = "0" ]; then
+	rm -f /usr/local/etc/php/conf.d/docker-php-ext-ldap.ini || true
+fi
+
+if [ "${APCU_ENABLE}" = "1" ]; then
+	cp /usr/local/etc/php/conf.disabled/apcu.ini /usr/local/etc/php/conf.d/apcu.ini
+else
+	rm -f /usr/local/etc/php/conf.d/apcu.ini || true
+fi
+
+# php-fpm template env subst.
+envsubst </templates/zz2-docker-custom.conf >/usr/local/etc/php-fpm.d/zz2-docker-custom.conf
+
+# If the environment is not local, we enable structured logging.
+if [ "${ENV:-}" != "loc" ]; then
+	envsubst </templates/zz3-structured-logs.conf >/usr/local/etc/php-fpm.d/zz3-structured-logs.conf
+fi
+
+exec "$@"
