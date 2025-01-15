@@ -44,7 +44,8 @@ RUN export XDEBUG_DEPS="linux-headers" && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} ${XDEBUG_DEPS} gettext && \
     docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include && \
     docker-php-ext-configure ldap && \
-    docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip ldap && \
+    docker-php-ext-configure ftp --with-openssl-dir=/usr \
+    docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip ldap ftp && \
     pecl install xdebug-${XDEBUG_VERSION} && \
     pecl install redis-${PHPREDIS_VERSION} && \
     pecl install igbinary memcached-${MEMCACHE_VERSION} --disable-memcached-sasl && \
