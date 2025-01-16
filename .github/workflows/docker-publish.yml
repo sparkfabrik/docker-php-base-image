@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tag: [8-3-2, 8-2-3, 8-1-16, 8-1-10]
+        tag: [8-4-2, 8-3-15, 8-3-2, 8-2-3, 8-1-16, 8-1-10]
         flavour: ["", "-rootless"]
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +36,8 @@ jobs:
       matrix:
         tag:
           [
+            8.4.2-fpm-alpine3.21,
+            8.3.15-fpm-alpine3.21,
             8.3.2-fpm-alpine3.18,
             8.2.3-fpm-alpine3.16,
             8.1.16-fpm-alpine3.16,

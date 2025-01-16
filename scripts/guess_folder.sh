@@ -4,7 +4,7 @@
 set -u
 
 # This script returns the base folder for the desired PHP version.
-# It tryes to find the corresponding folder in the filesystem, using this precedence:
+# It tries to find the corresponding folder in the filesystem, using this precedence:
 # 1. full version name (e.g.: 7.4.29-fpm-alpine3.15)
 # 2. full semver version (e.g.: 7.4.9)
 # 3. major.minor (e.g.: 7.4)
