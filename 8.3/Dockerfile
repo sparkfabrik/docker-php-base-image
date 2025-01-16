@@ -39,13 +39,13 @@ ENV XDEBUG_VERSION 3.3.1
 ENV MEMCACHE_VERSION 3.2.0
 ENV PHPREDIS_VERSION 5.3.7
 RUN export XDEBUG_DEPS="linux-headers" && \
-    export PHP_EXTRA_DEPS="libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev ldb-dev libldap openldap-dev" && \
-    export OPENSSL_LIBS="-L/usr -lssl -lcrypto -lz" && export OPENSSL_CFLAGS="-I/usr/include" && \
+    export PHP_EXTRA_DEPS="libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev ldb-dev libldap openldap-dev openssl-dev" && \
     apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} ${XDEBUG_DEPS} gettext && \
     docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ --with-webp=/usr/include && \
     docker-php-ext-configure ldap && \
-    docker-php-ext-configure ftp --with-openssl-dir && \
+    export OPENSSL_LIBS="-L/usr -lssl -lcrypto -lz" && export OPENSSL_CFLAGS="-I/usr/include" && \
+    docker-php-ext-configure ftp --with-openssl-dir=/usr/include/ && \
     docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip ldap ftp && \
     pecl install xdebug-${XDEBUG_VERSION} && \
     pecl install redis-${PHPREDIS_VERSION} && \
