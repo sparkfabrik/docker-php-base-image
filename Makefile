@@ -1,6 +1,6 @@
 .PHONY: shellcheck
 
-COMPOSER_VERSION ?= 2.8.1
+COMPOSER_VERSION = 2.8.9
 
 # build-7-1-11: build-test-image
 # 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.1.11-fpm-alpine3.4 7.1.11-fpm-alpine3.4
