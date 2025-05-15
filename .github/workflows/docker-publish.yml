@@ -7,6 +7,7 @@ on:
 
 env:
   IMAGE_NAME: docker-php-base-image
+  COMPOSER_VERSION: 2.8.9
 
 jobs:
   test:
