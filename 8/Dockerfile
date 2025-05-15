@@ -1,6 +1,6 @@
 ARG PHPVER
 
-FROM golang:1.22.0-alpine3.18 as mailhog
+FROM golang:1.23.0-alpine3.20 as mailhog
 
 # Install mailhog.
 ENV MAILHOG_VERSION 1.0.1
