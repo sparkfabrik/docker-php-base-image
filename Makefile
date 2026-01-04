@@ -170,6 +170,22 @@ build-8-4-2: build-template
 build-8-4-2-rootless: PHPVER=8.4.2-fpm-alpine3.21
 build-8-4-2-rootless: build-rootless-template
 
+build-8-3-15-frankenphp: PHPVER=8.3.15
+build-8-3-15-frankenphp: FOLDER=8.3-frankenphp
+build-8-3-15-frankenphp: build-frankenphp-template
+
+build-8-3-15-frankenphp-rootless: PHPVER=8.3.15
+build-8-3-15-frankenphp-rootless: FOLDER=8.3-frankenphp
+build-8-3-15-frankenphp-rootless: build-frankenphp-rootless-template
+
+build-8-4-2-frankenphp: PHPVER=8.4.2
+build-8-4-2-frankenphp: FOLDER=8.4-frankenphp
+build-8-4-2-frankenphp: build-frankenphp-template
+
+build-8-4-2-frankenphp-rootless: PHPVER=8.4.2
+build-8-4-2-frankenphp-rootless: FOLDER=8.4-frankenphp
+build-8-4-2-frankenphp-rootless: build-frankenphp-rootless-template
+
 build-template: guessing-folder build-test-image
 	docker buildx build \
 		--load \
@@ -219,3 +235,41 @@ shellcheck-build:
 
 shellcheck: shellcheck-build
 	@docker run --rm -it -w /app -v $${PWD}:/app sparkfabrik/shellchek
+
+build-frankenphp-template: build-test-image
+	docker buildx build \
+		--load \
+		--build-arg PHPVER=$(PHPVER) \
+		--target dist \
+		-t sparkfabrik/docker-php-base-image:$(PHPVER)-frankenphp \
+		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(FOLDER)
+	docker buildx build \
+		--load \
+		--build-arg PHPVER=$(PHPVER) \
+		--build-arg COMPOSER_VERSION="$(COMPOSER_VERSION)" \
+		--target dev \
+		-t sparkfabrik/docker-php-base-image:$(PHPVER)-frankenphp-dev \
+		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(FOLDER)
+	./tests/tests_wrapper.sh frankenphp sparkfabrik/docker-php-base-image:$(PHPVER)-frankenphp root
+
+build-frankenphp-rootless-template: build-test-image
+	docker buildx build \
+		--load \
+		--build-arg PHPVER=$(PHPVER) \
+		--build-arg user=1001 \
+		--target dist \
+		-t sparkfabrik/docker-php-base-image:$(PHPVER)-frankenphp-rootless \
+		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(FOLDER)
+	docker buildx build \
+		--load \
+		--build-arg PHPVER=$(PHPVER) \
+		--build-arg user=1001 \
+		--build-arg COMPOSER_VERSION="$(COMPOSER_VERSION)" \
+		--target dev \
+		-t sparkfabrik/docker-php-base-image:$(PHPVER)-frankenphp-rootless-dev \
+		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(FOLDER)
+	./tests/tests_wrapper.sh frankenphp sparkfabrik/docker-php-base-image:$(PHPVER)-frankenphp-rootless "unknown uid 1001"
