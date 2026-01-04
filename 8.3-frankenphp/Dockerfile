@@ -8,7 +8,7 @@ RUN apk add git && \
     go install github.com/mailhog/MailHog@v${MAILHOG_VERSION} && \
     mv /go/bin/MailHog /go/mailhog
 
-FROM dunglas/frankenphp:1-php8.3-alpine as dist
+FROM dunglas/frankenphp:${PHPVER}-alpine as dist
 
 # Build target arch passed by BuildKit
 ARG TARGETARCH
