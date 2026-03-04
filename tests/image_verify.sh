@@ -114,11 +114,6 @@ process_docker_env() {
     fi
 }
 
-begins_with_dash() {
-    # shellcheck disable=SC2317
-    case $1 in "-"*) true;; *) false;; esac;
-}
-
 # Process arguments
 PARAMS=""
 while [ -n "${1}" ]; do
