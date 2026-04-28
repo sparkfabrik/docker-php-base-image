@@ -2,6 +2,24 @@
 
 [![](https://images.microbadger.com/badges/image/sparkfabrik/docker-php-base-image.svg)](https://microbadger.com/images/sparkfabrik/docker-php-base-image 'Get your own image badge on microbadger.com')
 
+## Available Variants
+
+This repository provides two types of PHP images:
+
+### PHP-FPM Images
+Traditional PHP-FPM based images (e.g., `8.4.2-fpm-alpine3.21`, `8.3.15-fpm-alpine3.21`)
+
+### FrankenPHP Images
+FrankenPHP-based images for modern PHP applications (e.g., `8.4.2-frankenphp`, `8.3.15-frankenphp`)
+
+FrankenPHP is a modern application server for PHP built on top of the Caddy web server. It provides:
+- Built-in HTTP/2 and HTTP/3 support
+- Automatic HTTPS
+- Worker mode for improved performance
+- Early hints support
+
+Learn more at [frankenphp.dev](https://frankenphp.dev/)
+
 ## Packages
 
 ### PHP Modules
