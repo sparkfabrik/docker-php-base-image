@@ -170,6 +170,12 @@ build-8-4-2: build-template
 build-8-4-2-rootless: PHPVER=8.4.2-fpm-alpine3.21
 build-8-4-2-rootless: build-rootless-template
 
+build-8-4-22: PHPVER=8.4.22-fpm-alpine3.24
+build-8-4-22: build-template
+
+build-8-4-22-rootless: PHPVER=8.4.22-fpm-alpine3.24
+build-8-4-22-rootless: build-rootless-template
+
 build-template: guessing-folder build-test-image
 	docker buildx build \
 		--load \
