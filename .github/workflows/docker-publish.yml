@@ -140,7 +140,10 @@ jobs:
       - name: Upload digests
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ matrix.tag.full }}${{ matrix.flavour }}-${{ matrix.platform.arch }}
+          # Use a non-empty flavour label ("default"/"rootless") so the
+          # non-rootless artifact name is not a prefix of the rootless one;
+          # otherwise the merge download glob would match both flavours.
+          name: digests-${{ matrix.tag.full }}-${{ matrix.flavour == '-rootless' && 'rootless' || 'default' }}-${{ matrix.platform.arch }}
           path: digests/*
           if-no-files-found: error
           retention-days: 1
@@ -171,7 +174,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: digests
-          pattern: digests-${{ matrix.tag.full }}${{ matrix.flavour }}-*
+          pattern: digests-${{ matrix.tag.full }}-${{ matrix.flavour == '-rootless' && 'rootless' || 'default' }}-*
           merge-multiple: true
 
       - name: Create and push multi-arch manifests
