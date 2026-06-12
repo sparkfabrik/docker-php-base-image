@@ -8,13 +8,35 @@ on:
 env:
   IMAGE_NAME: docker-php-base-image
   COMPOSER_VERSION: 2.10.1
+  # Single source of truth for the PHP versions built across every job.
+  # short = Makefile target suffix (make build-<short>); full = PHPVER / image tag.
+  PHP_TAGS: >-
+    [
+      {"short":"8-3-2","full":"8.3.2-fpm-alpine3.18"},
+      {"short":"8-3-15","full":"8.3.15-fpm-alpine3.21"},
+      {"short":"8-4-2","full":"8.4.2-fpm-alpine3.21"},
+      {"short":"8-4-22","full":"8.4.22-fpm-alpine3.24"},
+      {"short":"8-5-7","full":"8.5.7-fpm-alpine3.24"}
+    ]
 
 jobs:
-  test:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      tags: ${{ steps.set.outputs.tags }}
+    steps:
+      - id: set
+        # The `env` context is not available to `strategy.matrix` expressions, so
+        # surface PHP_TAGS as a job output that downstream matrices can read.
+        run: echo "tags=$(echo "$PHP_TAGS" | jq -c .)" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: prepare
+    runs-on: ubuntu-latest
+    name: test ${{ matrix.tag.full }}${{ matrix.flavour }}
     strategy:
       matrix:
-        tag: [8-5-7, 8-4-22, 8-4-2, 8-3-15, 8-3-2]
+        tag: ${{ fromJSON(needs.prepare.outputs.tags) }}
         flavour: ["", "-rootless"]
     steps:
       - uses: actions/checkout@v6
@@ -27,26 +49,29 @@ jobs:
 
       - name: Build and test the image
         env:
-          SCOPE: ${{ matrix.tag }}${{ matrix.flavour }}
+          SCOPE: ${{ matrix.tag.full }}${{ matrix.flavour }}
         run: |
-          make build-${{ matrix.tag }}${{ matrix.flavour }} \
+          make build-${{ matrix.tag.short }}${{ matrix.flavour }} \
             BUILDX_CACHE="--cache-from type=gha,scope=${SCOPE} --cache-to type=gha,mode=max,scope=${SCOPE}"
 
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
+  build:
+    needs: prepare
     if: github.ref == 'refs/heads/master'
+    runs-on: ${{ matrix.runner }}
+    name: build ${{ matrix.tag.full }}${{ matrix.flavour }} (${{ matrix.arch }})
     strategy:
+      fail-fast: false
       matrix:
-        tag:
-          [
-            8.5.7-fpm-alpine3.24,
-            8.4.22-fpm-alpine3.24,
-            8.4.2-fpm-alpine3.21,
-            8.3.15-fpm-alpine3.21,
-            8.3.2-fpm-alpine3.18,
-          ]
+        tag: ${{ fromJSON(needs.prepare.outputs.tags) }}
         flavour: ["", "-rootless"]
+        platform: [linux/amd64, linux/arm64]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
     steps:
       - uses: actions/checkout@v6
 
@@ -58,57 +83,107 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check directory and Dockerfile
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push image digests
         run: |
           # Guess the folder for the php configuration
-          BASE_FOLDER=$(./scripts/guess_folder.sh "${{ matrix.tag }}")
+          BASE_FOLDER=$(./scripts/guess_folder.sh "${{ matrix.tag.full }}")
           if [ ! -d "$BASE_FOLDER" ]; then
             echo "Fail to guess the configuration folder"
             exit 1
           fi
+          test -d "$BASE_FOLDER" && test -f "$BASE_FOLDER/Dockerfile"
 
-          test -d $BASE_FOLDER && test -f $BASE_FOLDER/Dockerfile
+          # Build process
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+          # Change all uppercase to lowercase.
+          IMAGE_ID=$(echo "$IMAGE_ID" | tr '[A-Z]' '[a-z]')
+          echo IMAGE_ID=$IMAGE_ID
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+          SCOPE="${{ matrix.tag.full }}${{ matrix.flavour }}-${{ matrix.arch }}"
+          USER_ARG=""
+          if [ "${{ matrix.flavour }}" = "-rootless" ]; then
+            USER_ARG="--build-arg user=1001"
+          fi
+
+          # Build each target single-arch and push by digest (no tag); the merge
+          # job assembles the final multi-arch tags from the per-arch digests.
+          docker buildx build --push "$BASE_FOLDER" \
+            --platform ${{ matrix.platform }} \
+            --build-arg PHPVER=${{ matrix.tag.full }} $USER_ARG \
+            --target dist \
+            --cache-from type=gha,scope=${SCOPE}-dist \
+            --cache-to type=gha,mode=max,scope=${SCOPE}-dist \
+            --output type=image,name=$IMAGE_ID,push-by-digest=true,name-canonical=true \
+            --metadata-file dist-meta.json
+
+          docker buildx build --push "$BASE_FOLDER" \
+            --platform ${{ matrix.platform }} \
+            --build-arg PHPVER=${{ matrix.tag.full }} $USER_ARG \
+            --build-arg COMPOSER_VERSION="${COMPOSER_VERSION}" \
+            --target dev \
+            --cache-from type=gha,scope=${SCOPE}-dev \
+            --cache-to type=gha,mode=max,scope=${SCOPE}-dev \
+            --output type=image,name=$IMAGE_ID,push-by-digest=true,name-canonical=true \
+            --metadata-file dev-meta.json
+
+          mkdir -p digests
+          jq -r '.["containerimage.digest"]' dist-meta.json > "digests/dist-${{ matrix.arch }}"
+          jq -r '.["containerimage.digest"]' dev-meta.json > "digests/dev-${{ matrix.arch }}"
+
+      - name: Upload digests
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.tag.full }}${{ matrix.flavour }}-${{ matrix.arch }}
+          path: digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    needs: [prepare, build]
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    name: merge ${{ matrix.tag.full }}${{ matrix.flavour }}
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ${{ fromJSON(needs.prepare.outputs.tags) }}
+        flavour: ["", "-rootless"]
+    steps:
+      # Refs https://github.com/docker/login-action#github-container-registry
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build and push images to GitHub Container Registry
-        if: ${{ matrix.flavour == '' }}
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: digests
+          pattern: digests-${{ matrix.tag.full }}${{ matrix.flavour }}-*
+          merge-multiple: true
+
+      - name: Create and push multi-arch manifests
         run: |
-          # Guess the folder for the php configuration
-          BASE_FOLDER=$(./scripts/guess_folder.sh "${{ matrix.tag }}")
-          if [ ! -d "$BASE_FOLDER" ]; then
-            echo "Fail to guess the configuration folder"
-            exit 1
-          fi
-
-          # Build process
           IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
-          # Change all uppercase to lowercase.
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-          echo IMAGE_ID=$IMAGE_ID
-          SCOPE="${{ matrix.tag }}${{ matrix.flavour }}"
-          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --tag $IMAGE_ID:${{ matrix.tag }} --target dist --cache-from type=gha,scope=${SCOPE} --cache-to type=gha,mode=max,scope=${SCOPE}
-          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --tag $IMAGE_ID:${{ matrix.tag }}-dev --target dev --build-arg COMPOSER_VERSION="${COMPOSER_VERSION}" --cache-from type=gha,scope=${SCOPE} --cache-to type=gha,mode=max,scope=${SCOPE}
+          IMAGE_ID=$(echo "$IMAGE_ID" | tr '[A-Z]' '[a-z]')
+          TAG="${{ matrix.tag.full }}${{ matrix.flavour }}"
 
-      - name: Build and push images to GitHub Container Registry (rootless)
-        if: ${{ matrix.flavour == '-rootless' }}
-        run: |
-          # Guess the folder for the php configuration
-          BASE_FOLDER=$(./scripts/guess_folder.sh "${{ matrix.tag }}")
-          if [ ! -d "$BASE_FOLDER" ]; then
-            echo "Fail to guess the configuration folder"
-            exit 1
-          fi
+          # Collect the per-arch digests into ref arrays for each target.
+          dist_refs=()
+          for f in digests/dist-*; do dist_refs+=("$IMAGE_ID@$(cat "$f")"); done
+          dev_refs=()
+          for f in digests/dev-*; do dev_refs+=("$IMAGE_ID@$(cat "$f")"); done
 
-          # Build process
-          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
-          # Change all uppercase to lowercase.
-          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-          echo IMAGE_ID=$IMAGE_ID
-          SCOPE="${{ matrix.tag }}${{ matrix.flavour }}"
-          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless --target dist --cache-from type=gha,scope=${SCOPE} --cache-to type=gha,mode=max,scope=${SCOPE}
-          docker buildx build --push $BASE_FOLDER --platform "linux/amd64,linux/arm64" --build-arg PHPVER=${{ matrix.tag }} --build-arg user=1001 --tag $IMAGE_ID:${{ matrix.tag }}-rootless-dev --target dev --build-arg COMPOSER_VERSION="${COMPOSER_VERSION}" --cache-from type=gha,scope=${SCOPE} --cache-to type=gha,mode=max,scope=${SCOPE}
+          # dist -> :<tag>[-rootless]
+          docker buildx imagetools create -t "$IMAGE_ID:${TAG}" "${dist_refs[@]}"
+
+          # dev -> :<tag>[-rootless]-dev
+          docker buildx imagetools create -t "$IMAGE_ID:${TAG}-dev" "${dev_refs[@]}"
