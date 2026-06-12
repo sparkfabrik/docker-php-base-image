@@ -1,6 +1,6 @@
-ARG PHPVER
+ARG PHPVER=8.5.7-fpm-alpine3.24
 
-FROM golang:1.26-alpine3.23 as mailhog
+FROM golang:1.26-alpine3.24 AS mailhog
 
 # Install mailhog.
 ENV MAILHOG_VERSION=1.0.1
@@ -8,7 +8,7 @@ RUN apk add git && \
     go install github.com/mailhog/MailHog@v${MAILHOG_VERSION} && \
     mv /go/bin/MailHog /go/mailhog
 
-FROM php:$PHPVER as dist
+FROM php:$PHPVER AS dist
 
 # Build target arch passed by BuildKit
 ARG TARGETARCH
@@ -23,8 +23,8 @@ ENV PHP_REALPATH_CACHE_SIZE=2M
 ENV PHP_UPLOAD_MAX_FILE_SIZE=32M
 ENV PHP_POST_MAX_SIZE=32M
 ENV PHP_MAX_EXECUTION_TIME=30
-ENV BLACKFIRE_HOST=${BLACKFIRE_HOST:-blackfire}
-ENV BLACKFIRE_PORT=${BLACKFIRE_PORT:-8307}
+ENV BLACKFIRE_HOST=blackfire
+ENV BLACKFIRE_PORT=8307
 ENV PHP_EXPOSE_PHP=0
 
 # FPM Configurations.
@@ -35,9 +35,9 @@ ENV PHP_FPM_MIN_SPARE_SERVERS=1
 ENV PHP_FPM_MAX_SPARE_SERVERS=3
 ENV PHP_FPM_PM_STATUS_PATH=/status
 
-ENV XDEBUG_VERSION=3.4.1
-ENV MEMCACHE_VERSION=3.3.0
-ENV PHPREDIS_VERSION=6.1.0
+ENV XDEBUG_VERSION=3.5.3
+ENV MEMCACHE_VERSION=3.4.0
+ENV PHPREDIS_VERSION=6.3.0
 RUN export XDEBUG_DEPS="linux-headers" && \
     export PHP_EXTRA_DEPS="libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev libldap openldap-dev openssl-dev" && \
     apk update && \
@@ -53,13 +53,13 @@ RUN export XDEBUG_DEPS="linux-headers" && \
     rm -rf /var/cache/apk/*
 
 # Install APCu.
-ENV APCU_VERSION=5.1.24
+ENV APCU_VERSION=5.1.28
 RUN apk add --no-cache --virtual .phpize-deps-configure $PHPIZE_DEPS && \
     pecl install apcu-${APCU_VERSION} && \
     apk del .phpize-deps-configure
 
 # Install blackfire client.
-ENV BLACKFIRE_CLIENT_VERSION=2.8.1
+ENV BLACKFIRE_CLIENT_VERSION=2026.6.0
 RUN mkdir -p /tmp/blackfire && \
     curl -A "Docker" -L https://packages.blackfire.io/binaries/blackfire/${BLACKFIRE_CLIENT_VERSION}/blackfire-linux_${TARGETARCH}.tar.gz | tar zxp -C /tmp/blackfire && \
     mv /tmp/blackfire/blackfire /usr/bin/blackfire && \
@@ -88,6 +88,13 @@ COPY conf/*.ini /usr/local/etc/php/conf.d/
 COPY conf.disabled /usr/local/etc/php/conf.disabled
 COPY fpm-conf-templates/ /templates/
 
+# Load OPcache as a Zend extension only when it ships as a shared object
+# (PHP <= 8.4). Since PHP 8.5 OPcache is statically compiled into the binary,
+# so loading opcache.so would fail; opcache.ini still tunes it in both cases.
+RUN if [ -f "$(php -r 'echo ini_get("extension_dir");')/opcache.so" ]; then \
+        echo "zend_extension=opcache.so" > /usr/local/etc/php/conf.d/00-opcache-load.ini; \
+    fi
+
 # Make folders writable for the root group
 RUN chmod 775 /usr/local/etc/php && \
     chmod 775 /usr/local/etc/php/conf.d && \
@@ -100,7 +107,7 @@ USER $user
 ENTRYPOINT [ "/docker-entrypoint.sh" ]
 CMD ["php-fpm"]
 
-FROM dist as dev
+FROM dist AS dev
 
 # Build target arch passed by BuildKit
 ARG TARGETARCH
