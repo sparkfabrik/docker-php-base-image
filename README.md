@@ -25,7 +25,7 @@
 
 - XDEBUG 3.5.3
 - MAILHOG v1.0.1
-- BLACKFIRE (client 2.8.1, probe latest)
+- BLACKFIRE (client 2026.6.0, probe latest)
 
 ## Env variables
 
