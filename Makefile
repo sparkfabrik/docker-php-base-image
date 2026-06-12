@@ -138,23 +138,25 @@ BUILDX_CACHE ?=
 # build-8-1-12-rootless: PHPVER=8.1.12-fpm-alpine3.16
 # build-8-1-12-rootless: build-rootless-template
 
-build-8-1-10: PHPVER=8.1.10-fpm-alpine3.16
-build-8-1-10: build-template
+# PHP 8.1 reached end of life on 2025-12-31; targets kept commented for reference.
+# build-8-1-10: PHPVER=8.1.10-fpm-alpine3.16
+# build-8-1-10: build-template
+#
+# build-8-1-10-rootless: PHPVER=8.1.10-fpm-alpine3.16
+# build-8-1-10-rootless: build-rootless-template
+#
+# build-8-1-16: PHPVER=8.1.16-fpm-alpine3.16
+# build-8-1-16: build-template
+#
+# build-8-1-16-rootless: PHPVER=8.1.16-fpm-alpine3.16
+# build-8-1-16-rootless: build-rootless-template
 
-build-8-1-10-rootless: PHPVER=8.1.10-fpm-alpine3.16
-build-8-1-10-rootless: build-rootless-template
-
-build-8-1-16: PHPVER=8.1.16-fpm-alpine3.16
-build-8-1-16: build-template
-
-build-8-1-16-rootless: PHPVER=8.1.16-fpm-alpine3.16
-build-8-1-16-rootless: build-rootless-template
-
-build-8-2-3: PHPVER=8.2.3-fpm-alpine3.16
-build-8-2-3: build-template
-
-build-8-2-3-rootless: PHPVER=8.2.3-fpm-alpine3.16
-build-8-2-3-rootless: build-rootless-template
+# PHP 8.2 images retired; targets kept commented for reference.
+# build-8-2-3: PHPVER=8.2.3-fpm-alpine3.16
+# build-8-2-3: build-template
+#
+# build-8-2-3-rootless: PHPVER=8.2.3-fpm-alpine3.16
+# build-8-2-3-rootless: build-rootless-template
 
 build-8-3-2: PHPVER=8.3.2-fpm-alpine3.18
 build-8-3-2: build-template
