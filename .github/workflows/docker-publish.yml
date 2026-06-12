@@ -28,7 +28,9 @@ jobs:
       - id: set
         # The `env` context is not available to `strategy.matrix` expressions, so
         # surface PHP_TAGS as a job output that downstream matrices can read.
-        run: echo "tags=$(echo "${PHP_TAGS}" | jq -c .)" >> "$GITHUB_OUTPUT"
+        run: |
+          TAGS=$(jq -c . <<< "${PHP_TAGS}")
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
 
   test:
     needs: prepare
@@ -55,21 +57,23 @@ jobs:
             BUILDX_CACHE="--cache-from type=gha,scope=${SCOPE} --cache-to type=gha,mode=max,scope=${SCOPE}"
 
   build:
-    needs: prepare
+    needs: [prepare, test]
     if: github.ref == 'refs/heads/master'
-    runs-on: ${{ matrix.runner }}
-    name: build ${{ matrix.tag.full }}${{ matrix.flavour }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.platform.runner }}
+    name: build ${{ matrix.tag.full }}${{ matrix.flavour }} (${{ matrix.platform.arch }})
     strategy:
       fail-fast: false
       matrix:
         tag: ${{ fromJSON(needs.prepare.outputs.tags) }}
         flavour: ["", "-rootless"]
-        platform: [linux/amd64, linux/arm64]
-        include:
-          - platform: linux/amd64
+        # Each platform is a self-contained object (name/runner/arch) so the
+        # runner and arch are always defined; an `include` keyed on the platform
+        # axis would be ambiguous about enriching versus adding matrix rows.
+        platform:
+          - name: linux/amd64
             runner: ubuntu-latest
             arch: amd64
-          - platform: linux/arm64
+          - name: linux/arm64
             runner: ubuntu-24.04-arm
             arch: arm64
     steps:
@@ -102,7 +106,7 @@ jobs:
           IMAGE_ID=$(echo "${IMAGE_ID}" | tr '[A-Z]' '[a-z]')
           echo "IMAGE_ID=${IMAGE_ID}"
 
-          SCOPE="${{ matrix.tag.full }}${{ matrix.flavour }}-${{ matrix.arch }}"
+          SCOPE="${{ matrix.tag.full }}${{ matrix.flavour }}-${{ matrix.platform.arch }}"
           USER_ARG=""
           if [ "${{ matrix.flavour }}" = "-rootless" ]; then
             USER_ARG="--build-arg user=1001"
@@ -111,7 +115,7 @@ jobs:
           # Build each target single-arch and push by digest (no tag); the merge
           # job assembles the final multi-arch tags from the per-arch digests.
           docker buildx build --push "${BASE_FOLDER}" \
-            --platform ${{ matrix.platform }} \
+            --platform ${{ matrix.platform.name }} \
             --build-arg PHPVER=${{ matrix.tag.full }} ${USER_ARG} \
             --target dist \
             --cache-from type=gha,scope=${SCOPE}-dist \
@@ -120,7 +124,7 @@ jobs:
             --metadata-file dist-meta.json
 
           docker buildx build --push "${BASE_FOLDER}" \
-            --platform ${{ matrix.platform }} \
+            --platform ${{ matrix.platform.name }} \
             --build-arg PHPVER=${{ matrix.tag.full }} ${USER_ARG} \
             --build-arg COMPOSER_VERSION="${COMPOSER_VERSION}" \
             --target dev \
@@ -130,13 +134,13 @@ jobs:
             --metadata-file dev-meta.json
 
           mkdir -p digests
-          jq -r '.["containerimage.digest"]' dist-meta.json > "digests/dist-${{ matrix.arch }}"
-          jq -r '.["containerimage.digest"]' dev-meta.json > "digests/dev-${{ matrix.arch }}"
+          jq -r '.["containerimage.digest"]' dist-meta.json > "digests/dist-${{ matrix.platform.arch }}"
+          jq -r '.["containerimage.digest"]' dev-meta.json > "digests/dev-${{ matrix.platform.arch }}"
 
       - name: Upload digests
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ matrix.tag.full }}${{ matrix.flavour }}-${{ matrix.arch }}
+          name: digests-${{ matrix.tag.full }}${{ matrix.flavour }}-${{ matrix.platform.arch }}
           path: digests/*
           if-no-files-found: error
           retention-days: 1
@@ -176,11 +180,20 @@ jobs:
           IMAGE_ID=$(echo "${IMAGE_ID}" | tr '[A-Z]' '[a-z]')
           TAG="${{ matrix.tag.full }}${{ matrix.flavour }}"
 
+          # Do not let an unmatched glob expand to the literal pattern: if the
+          # digests were not downloaded the ref arrays stay empty and we fail loudly.
+          shopt -s nullglob
+
           # Collect the per-arch digests into ref arrays for each target.
           dist_refs=()
           for f in digests/dist-*; do dist_refs+=("${IMAGE_ID}@$(cat "${f}")"); done
           dev_refs=()
           for f in digests/dev-*; do dev_refs+=("${IMAGE_ID}@$(cat "${f}")"); done
+
+          if [ "${#dist_refs[@]}" -eq 0 ] || [ "${#dev_refs[@]}" -eq 0 ]; then
+            echo "No digests found for ${TAG}; expected dist and dev digests per architecture." >&2
+            exit 1
+          fi
 
           # dist -> :<tag>[-rootless]
           docker buildx imagetools create -t "${IMAGE_ID}:${TAG}" "${dist_refs[@]}"
