@@ -28,7 +28,7 @@ jobs:
       - id: set
         # The `env` context is not available to `strategy.matrix` expressions, so
         # surface PHP_TAGS as a job output that downstream matrices can read.
-        run: echo "tags=$(echo "${PHP_TAGS}" | jq -c .)" >> "${GITHUB_OUTPUT}"
+        run: echo "tags=$(echo "${PHP_TAGS}" | jq -c .)" >> "$GITHUB_OUTPUT"
 
   test:
     needs: prepare
