@@ -2,174 +2,140 @@
 
 ## Project Overview
 
-This repository builds and publishes the SparkFabrik PHP-FPM base Docker images. Each image bundles a pinned PHP version (FPM, Alpine) with a fixed set of extensions, Composer, MailHog, and the Blackfire client/probe, plus an entrypoint that turns environment variables into PHP/FPM configuration at container start. Images are published to `ghcr.io/sparkfabrik/docker-php-base-image`.
+Builds and publishes the SparkFabrik PHP-FPM base Docker images to `ghcr.io/sparkfabrik/docker-php-base-image`. Each image bundles a pinned PHP version (FPM, Alpine) with a fixed extension set, Composer, MailHog, and the Blackfire client/probe, plus an entrypoint that renders PHP/FPM config from environment variables at container start.
 
-The active images are the PHP 8.x line, all built from a single shared folder (`8/`). The numbered `7.x` folders (`7.3.24-fpm-alpine3.12`, `7.4*`, etc.) are frozen legacy builds kept for reference; do not extend them.
+This is an image factory, not an application: there is no root package manager. "Dependencies" are upstream versions pinned in the Dockerfile and the `Makefile`.
 
-**Tech stack:** Dockerfiles (multi-stage, `dist` and `dev` targets), POSIX shell (entrypoint, test harness), GNU Make as the task runner, GitHub Actions for CI/publishing. There is no application package manager at the repository root; "dependencies" are upstream versions pinned inside `8/Dockerfile` and the `Makefile`.
+**Which versions are built is data, not knowledge — always look it up instead of assuming the current major:**
+
+- `PHP_TAGS` in `.github/workflows/docker-publish.yml` is the single source of truth for the published versions (each entry has `short` = Makefile target suffix, `full` = the PHPVER / image tag).
+- The active `build-<x-y-z>:` targets in the `Makefile` mirror it for local builds; list them with `grep -E '^build-[0-9-]+:' Makefile`.
+
+The current major is PHP 8, but treat that as a fact to be re-read, not hardcoded — the same conventions apply when the line moves to 9, 10, etc.
+
+**Tech stack:** multi-stage Dockerfiles (`dist` + `dev` targets), POSIX shell (entrypoint, test harness), GNU Make (task runner), GitHub Actions (CI/publish).
 
 ### Layout
 
-- `8/` — the shared source for every PHP 8.x image. `Dockerfile`, `docker-entrypoint.sh`, `conf/` (active php.ini fragments), `conf.disabled/` (opt-in extensions enabled by the entrypoint), `fpm-conf-templates/`.
-- `scripts/guess_folder.sh` — maps a PHP version (e.g. `8.5.7-fpm-alpine3.24`) to its build folder, falling back from full version to `major.minor` to `major` (so all `8.x` resolve to `8/`).
-- `tests/` — image end-to-end verification (`image_verify.sh`, `tests_wrapper.sh`, `expectations/`).
-- `shellcheck/` — dockerized ShellCheck setup used by `make shellcheck`.
-- `Makefile` — build targets per version and the generic build templates.
-- `.github/workflows/` — `docker-publish.yml` (test + native multi-arch publish), `qa.yml` (ShellCheck).
+- One shared build folder per active major (currently `8/`): `Dockerfile`, `docker-entrypoint.sh`, `conf/` (active php.ini fragments), `conf.disabled/` (opt-in extensions), `fpm-conf-templates/`.
+- `scripts/guess_folder.sh` — resolves a `PHPVER` to its folder, falling back full → `major.minor` → `major`, so every minor/patch of a major reuses that major's one folder.
+- `tests/` — image end-to-end checks (`image_verify.sh`, `tests_wrapper.sh`, `expectations/`).
+- `shellcheck/` — dockerized ShellCheck for `make shellcheck`.
+- The numbered `7.x` folders are frozen legacy; do not extend or imitate them.
 
 ## Setup
 
-Everything runs in Docker via `make` and `docker buildx`. No local PHP, Composer, or PHP extensions are required — they exist only inside the built images.
-
-Requirements on the host: Docker with Buildx, and GNU Make.
+Everything runs in Docker via `make` and `docker buildx`; no local PHP/Composer/extensions. The host needs Docker with Buildx and GNU Make.
 
 ```bash
-# Build and locally test a specific image (builds dist + dev, then runs the test suite)
-make build-8-5-7
+# Build + locally test one version (dist + dev, then the suite).
+# Use a version that exists as a Makefile target (see grep above).
+make build-<x-y-z>           # e.g. the newest active target
+make build-<x-y-z>-rootless  # rootless flavour (uid 1001)
 
-# Same for the rootless flavour (runs as uid 1001)
-make build-8-5-7-rootless
-
-# Build any version generically (this is what CI uses)
-make build-template PHPVER=8.5.7-fpm-alpine3.24
-make build-rootless-template PHPVER=8.5.7-fpm-alpine3.24
+# Generic form, any full tag (this is what CI uses):
+make build-template PHPVER=<x.y.z-fpm-alpineX.Y>
+make build-rootless-template PHPVER=<x.y.z-fpm-alpineX.Y>
 ```
 
-`make build-<version>` targets are convenience wrappers for local use; they set `PHPVER` and delegate to `build-template` / `build-rootless-template`.
+The `build-<x-y-z>` targets just set `PHPVER` and delegate to the templates.
 
 ## Key Conventions
 
-- **One shared folder for all 8.x.** Edit `8/` to change behaviour for every PHP 8 image. Per-version differences are handled at build time (build args, conditional shell), not by forking the folder. The recently consolidated layout must stay this way.
-- **Version resolution is automatic.** `scripts/guess_folder.sh` picks the folder from `PHPVER`. A new `8.x` version needs no new folder.
-- **Two build targets per image:** `dist` (runtime image) and `dev` (adds Composer, git, rsync, patch — built `FROM dist`). Published tags: `:<version>`, `:<version>-dev`, and the `-rootless` variants.
-- **Opt-in extensions.** `redis`, `memcached`, `xdebug`, `ldap` ship installed but disabled; the entrypoint enables them from `conf.disabled/` based on `*_ENABLE` env vars. `apcu`, `igbinary`, and the rest are on by default.
-- **OPcache loading is version-aware.** PHP ≤ 8.4 loads `opcache.so`; PHP 8.5 has OPcache compiled in statically. `8/Dockerfile` only writes the `zend_extension=opcache.so` loader when the shared object exists. `8/conf/opcache.ini` carries the tuning only.
-- **Pinned upstream versions live in two places:** extension/tool versions in `8/Dockerfile` (`XDEBUG_VERSION`, `PHPREDIS_VERSION`, `MEMCACHE_VERSION`, `APCU_VERSION`, `BLACKFIRE_CLIENT_VERSION`, golang builder, MailHog) and `COMPOSER_VERSION` in both the `Makefile` and `docker-publish.yml`. Keep the two Composer pins in sync.
-- `docker-compose.yml.dist` is a legacy usage example, not part of the build.
+### Single shared folder (mandatory)
+
+All images of a major are built from ONE folder (currently `8/`). Express per-version differences with build args and conditional shell inside that folder — never by forking it. Adding a patch, a minor, or a whole new major must reuse a shared folder. A separate per-version folder is acceptable only when a difference is genuinely impossible to express with build args, and the reason must be documented. Maintaining near-duplicate folders is explicitly not worth it; the frozen `7.x` folders are the anti-pattern, not a model.
+
+### Every version ships 2 flavours × 2 architectures (mandatory)
+
+For each `x.y.z` the pipeline MUST produce and publish:
+
+- flavours: **root** and **rootless** (uid 1001);
+- architectures: **linux/amd64** and **linux/arm64**.
+
+Both architectures are non-negotiable and built natively (amd64 on `ubuntu-latest`, arm64 on `ubuntu-24.04-arm`): no dropping an arch, no QEMU-only shortcut, no publishing a single-arch tag. Both flavours are non-negotiable. Published tags per version — `:<version>`, `:<version>-dev`, `:<version>-rootless`, `:<version>-rootless-dev` — are each multi-arch manifests.
+
+### Build and runtime
+
+- Two targets: `dist` (runtime) and `dev` (`FROM dist` plus Composer, git, rsync, patch).
+- Opt-in extensions (`redis`, `memcached`, `xdebug`, `ldap`) ship installed but disabled; the entrypoint enables them from `conf.disabled/` via `*_ENABLE` env vars. Others (`apcu`, `igbinary`, …) are on by default.
+- OPcache loading is version-aware: write the `zend_extension=opcache.so` loader only when that shared object exists (newer PHP compiles OPcache in statically). Keep the logic conditional in the Dockerfile; `conf/opcache.ini` holds tuning only.
 
 ## Code Style
 
-- **Shell** (entrypoint, `tests/*.sh`, `scripts/*.sh`): POSIX `sh`, must pass ShellCheck. Run `make shellcheck` (runs ShellCheck in a container over the repo). CI enforces this via `qa.yml`.
-- **Dockerfile**: keep it BuildKit-check clean. Use `FROM … AS` (uppercase), give `ARG`s used in `FROM` a default, and do not reference undefined variables in `ENV`. Verify locally with `docker buildx build` (it prints any checks) or `docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint` for workflow files.
-- No EditorConfig or language formatter is configured; match the surrounding style.
+- **Shell** (entrypoint, `tests/*.sh`, `scripts/*.sh`): POSIX `sh`, ShellCheck-clean — `make shellcheck` (CI enforces via `qa.yml`).
+- **Dockerfile**: BuildKit-check clean — `FROM … AS` uppercase, defaults for `ARG`s used in `FROM`, no undefined `ENV` vars. `docker buildx build` prints any checks.
+- No formatter configured; match the surrounding style.
 
 ## Git Workflow
 
-### Commits
+**Commits** — [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `<type>(<scope>): <description>`, lowercase imperative, no trailing period. Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `ci`, `perf`, `build`. Every commit carries an `Assisted-by:` trailer (agent/model) via `git commit --trailer` (SparkFabrik policy); reference issues fully qualified (`Refs:` / `Closes: owner/repo#N`).
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+**Branching** — `feat|fix|chore|ci|test|docs/<kebab-description>`. Never push to `master`; branch and open a PR.
 
-```
-<type>(<scope>): <description>
-```
-
-**Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `ci`, `perf`, `build`. **Scope** is optional — use the affected component (e.g. `php8`, `ci`). Keep the description lowercase, imperative, no trailing period.
-
-Every commit must carry an `Assisted-by:` trailer identifying the agent and model (SparkFabrik policy), applied via `git commit --trailer`. Reference the related issue with a fully qualified path when one exists (`Refs:`/`Closes: owner/repo#N`).
-
-### Branching
-
-- Branch naming: `feat/`, `fix/`, `chore/`, `ci/`, `test/`, `docs/` prefix + kebab-case description (e.g. `ci/arm64-native-deploy`, `fix/deploy-flavour-digest-collision`).
-- **Never push directly to `master`.** Always create a feature branch and open a pull request.
-
-### Rebasing
-
-- Rebase onto `master` before pushing; avoid merge commits.
-- Use `--force-with-lease` (never `--force`) after rebasing or amending.
+**Rebasing** — rebase onto `master`, no merge commits; `--force-with-lease`, never `--force`.
 
 ## Dependencies and Version Pinning
 
-This repo pins upstream versions rather than resolving them from a lockfile. The pins live in `8/Dockerfile` (PHP extensions via PECL, the golang builder image, MailHog, the Blackfire client) and in the `COMPOSER_VERSION` variables.
+Versions are pinned (no lockfile): PHP extensions/tools and the golang builder in the Dockerfile, plus `COMPOSER_VERSION` in both the `Makefile` and `docker-publish.yml` (keep them in sync).
 
 Before bumping any pin:
 
-1. **Never assume you know the latest version.** Training data is stale — always verify against the live source.
-2. **Check the live source:**
+1. Never trust training data for "latest" — check the live source.
+2. Verify against it:
 
 ```bash
-# Official PHP image tags (Docker Hub)
-curl -s "https://hub.docker.com/v2/repositories/library/php/tags/?page_size=100&name=8.5" \
-  | grep -oE '"name":"[^"]*fpm-alpine[0-9.]*"' | sort -u
-
-# PECL extension releases (xdebug, redis, memcached, apcu, igbinary)
-curl -s "https://pecl.php.net/rest/r/xdebug/allreleases.xml" | grep -oE '<v>[0-9.]+</v>' | head
-
-# Composer
+# PHP image tags (Docker Hub) — set name= to the line you target
+curl -s "https://hub.docker.com/v2/repositories/library/php/tags/?page_size=100&name=<x.y>" | grep -oE '"name":"[^"]*fpm-alpine[0-9.]*"' | sort -u
+# PECL release (xdebug/redis/memcached/apcu/igbinary)
+curl -s "https://pecl.php.net/rest/r/<ext>/allreleases.xml" | grep -oE '<v>[0-9.]+</v>' | head
+# Composer / golang / Blackfire CLI
 curl -s https://getcomposer.org/versions | jq '.stable[0]'
-
-# golang image tags (Docker Hub), Blackfire CLI
-curl -s "https://hub.docker.com/v2/repositories/library/golang/tags/?page_size=100&name=alpine" | grep -oE '"name":"1\.[0-9]+-alpine3\.[0-9]+"' | sort -V | tail
+curl -s "https://hub.docker.com/v2/repositories/library/golang/tags/?page_size=100&name=alpine" | grep -oE '"name":"[0-9.]+-alpine3\.[0-9]+"' | sort -V | tail
 curl -s -A Docker "https://blackfire.io/api/v1/releases" | jq '.cli'
 ```
 
-3. **Verify compatibility with the target PHP versions**, not just "latest". The `8/Dockerfile` is shared across PHP 8.3–8.5, so a bump must build on every active version. Example: Xdebug 3.4 does not support PHP 8.5, and phpredis 6.1 fails to compile against PHP 8.5 headers — both required bumps when 8.5 was added.
-4. **Avoid releases published within the last 5 days** to reduce supply-chain risk.
-5. **After any bump, build and test the oldest and newest active versions** (`make build-8-3-2` and `make build-8-5-7`, plus a rootless flavour) before opening a PR.
+3. The shared Dockerfile serves every active version, so a bump must build on all of them, not just the newest. (When PHP 8.5 was added, Xdebug 3.4 and phpredis 6.1 had to be bumped because they do not support 8.5.)
+4. Avoid releases published in the last 5 days (supply-chain risk).
+5. After a bump, build and test the oldest and newest active versions plus a rootless flavour before opening a PR.
 
 ## Testing
 
-`make build-<version>` automatically runs the end-to-end suite after building, via `tests/tests_wrapper.sh` → `tests/image_verify.sh`. The harness starts the built image and asserts expected PHP settings, enabled/disabled extensions, FPM config, and the container user.
+`make build-<version>` runs the suite after building: `tests/tests_wrapper.sh` → `tests/image_verify.sh` starts the image and asserts PHP settings, enabled/disabled extensions, FPM config, and the container user.
 
-- Expectations live in `tests/expectations/php7/` (`expectations_default`, `expectations_overrides`, `image_env_overrides`) — the folder name is the harness profile, not a PHP version.
-- The test image itself is built by `make build-test-image` (target `tests/Dockerfile`).
-- To test an already-built image directly: `./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:<version> root` (use the expected uid string, e.g. `unknown uid 1001`, for rootless).
+- Expectations: `tests/expectations/php7/` (`expectations_default`, `expectations_overrides`, `image_env_overrides`) — `php7` is the harness profile name, not a PHP version.
+- Test an existing image directly: `./tests/tests_wrapper.sh php7 <image> root` (use the string `unknown uid 1001` as the user argument for rootless).
 
 ## CI/CD
 
-GitHub Actions, two workflows:
+GitHub Actions: `qa.yml` (ShellCheck on push/PR) and `docker-publish.yml` (build/test/publish).
 
-- **`qa.yml`** — runs ShellCheck on every push and pull request.
-- **`docker-publish.yml`** — the build/test/publish pipeline.
+| Job       | Runs        | Purpose                                                         |
+| --------- | ----------- | --------------------------------------------------------------- |
+| `prepare` | PR + master | Emits `PHP_TAGS` as an output (the matrix cannot read `env`).   |
+| `test`    | PR + master | Builds each version native amd64 (`--load`) and runs the suite. |
+| `build`   | master      | Builds each version per arch natively, pushes by digest.        |
+| `merge`   | master      | Assembles the per-arch digests into the multi-arch tags.        |
 
-### docker-publish.yml jobs
-
-| Job       | Runs on     | Purpose                                                                                                                               |
-| --------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `prepare` | PR + master | Surfaces the `PHP_TAGS` version list as an output (the `env` context is not available to `strategy.matrix`, so it is forwarded here). |
-| `test`    | PR + master | Builds each version single-arch (native amd64, `--load`, no QEMU) and runs the test suite.                                            |
-| `build`   | master only | Builds each version per architecture natively (amd64 on `ubuntu-latest`, arm64 on `ubuntu-24.04-arm`) and pushes by digest.           |
-| `merge`   | master only | Assembles the per-arch digests into the final multi-arch tags with `docker buildx imagetools create`.                                 |
-
-Key points:
-
-- **`PHP_TAGS` (workflow `env`) is the single source of truth** for which versions are built. Add or remove a version there; `test`, `build`, and `merge` all derive their matrix from it. Each entry has `short` (Makefile target suffix) and `full` (the PHPVER tag).
-- The numbered `make build-<version>` targets must stay in sync with `PHP_TAGS` so local builds match CI.
+- `PHP_TAGS` is the only place to add or remove a version; all matrices derive from it. Keep the `make build-<x-y-z>` targets in sync with it.
+- `build`/`merge` run only on `master`, so the publish path is first exercised by the merge commit. Watch that run and verify with `docker buildx imagetools inspect <tag>` that each tag is a 2-arch manifest and that root and rootless differ.
 - Layer caching uses `type=gha`, scoped per tag/flavour (and per arch in `build`).
-- `build`/`merge` only run on `master`, so the publish path is first exercised by the merge commit, not by the PR. Watch the first post-merge run and spot-check tags with `docker buildx imagetools inspect`.
 
 ## Command Safety
 
-### Safe (run autonomously)
+**Safe (autonomous):** `make shellcheck`, `make build-test-image`, `make build-<version>` / `make build-template PHPVER=…` (local, `--load`, no push), `docker buildx build … --load`, `docker buildx imagetools inspect`, `git status|log|diff`, `./scripts/guess_folder.sh <version>`.
 
-Read-only or local, non-publishing:
+**Dangerous (ask first):** bumping any pinned version or `COMPOSER_VERSION`; editing `PHP_TAGS` or the publish workflow; `docker buildx build --push` (publishes); `git push`; opening or merging PRs; `--force-with-lease`, `git commit --amend` on pushed commits.
 
-- `make shellcheck`, `make build-test-image`
-- `make build-<version>` / `make build-template PHPVER=…` (builds and tests locally with `--load`; does not push)
-- `docker buildx build … --load`, `docker buildx imagetools inspect`
-- `git status`, `git log`, `git diff`, `./scripts/guess_folder.sh <version>`
-
-### Dangerous (ask the user first)
-
-State-changing or outward-facing:
-
-- Bumping any pinned version in `8/Dockerfile` or `COMPOSER_VERSION`
-- Editing `PHP_TAGS` or the publish workflow
-- `docker buildx build --push …` (publishes to GHCR)
-- `git push`, opening/merging PRs
-- `git push --force-with-lease`, `git commit --amend` on already-pushed commits
-
-### Destructive (never run)
-
-- `git push --force` to any branch, force-push to `master`
-- `git reset --hard`, `docker buildx prune -a` / image pruning on a shared host
-- Deleting GHCR packages or published tags
+**Destructive (never):** `git push --force`, force-push to `master`, `git reset --hard`, image/buildx pruning on a shared host, deleting GHCR packages or tags.
 
 ## Important Rules
 
-- Never install PHP, Composer, or extensions on the host — everything lives inside the images, built via `make` / `docker buildx`.
-- Edit the shared `8/` folder for all PHP 8.x changes; do not fork per version and do not touch the frozen `7.x` folders.
-- The `8/Dockerfile` is shared across PHP 8.3–8.5 — any extension or tool bump must build and pass tests on every active version, oldest and newest.
-- Always verify the latest version against the live registry before bumping a pin; never trust training data.
-- Keep `PHP_TAGS` (CI) and the `make build-<version>` targets and the two `COMPOSER_VERSION` pins in sync.
-- Keep Dockerfiles BuildKit-check clean and shell scripts ShellCheck clean (`make shellcheck`).
-- Conventional commits with an `Assisted-by:` trailer; branch off `master`, never push to it directly, rebase with `--force-with-lease`.
+- Build everything in Docker via `make` / `docker buildx`; never install PHP, Composer, or extensions on the host.
+- One shared folder per major — express version differences with build args, never fork folders (unless technically impossible, and then document why). Do not touch the frozen `7.x` folders.
+- Every published `x.y.z` MUST ship root and rootless, each as a native amd64 + arm64 multi-arch manifest. No dropped arch, no single flavour, no QEMU-only shortcut.
+- Discover active versions from `PHP_TAGS` / the Makefile targets; do not assume the current major.
+- A shared-Dockerfile bump must build and pass tests on the oldest and newest active versions; verify "latest" against the live registry first.
+- Keep `PHP_TAGS`, the `make build-<x-y-z>` targets, and the two `COMPOSER_VERSION` pins in sync.
+- Dockerfiles BuildKit-check clean, shell ShellCheck clean.
+- Conventional commits with an `Assisted-by:` trailer; branch off `master`, never push to it, rebase with `--force-with-lease`.
