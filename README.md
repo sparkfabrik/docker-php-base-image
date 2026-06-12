@@ -1,14 +1,16 @@
 # Docker PHP base images
 
-[![](https://images.microbadger.com/badges/image/sparkfabrik/docker-php-base-image.svg)](https://microbadger.com/images/sparkfabrik/docker-php-base-image 'Get your own image badge on microbadger.com')
-
 ## Packages
 
 ### PHP Modules
 
+- apcu
 - bcmath
+- ftp
 - gd
+- igbinary
 - intl
+- ldap (not activated by default)
 - mbstring
 - memcached (not activated by default)
 - pcntl
@@ -21,9 +23,9 @@
 
 ### Tools
 
-- XDEBUG 2.9.0
-- MAILHOG v0.1.9
-- BLACKFIRE (latest)
+- XDEBUG 3.5.3
+- MAILHOG v1.0.1
+- BLACKFIRE (client 2026.6.0, probe latest)
 
 ## Env variables
 

@@ -1,6 +1,10 @@
 .PHONY: shellcheck
 
-COMPOSER_VERSION = 2.8.9
+COMPOSER_VERSION = 2.10.1
+
+# Optional extra buildx flags (e.g. layer caching). Empty by default so local
+# `make` builds work without a cache backend; CI passes --cache-from/--cache-to.
+BUILDX_CACHE ?=
 
 # build-7-1-11: build-test-image
 # 	docker buildx build --load -t sparkfabrik/docker-php-base-image:7.1.11-fpm-alpine3.4 7.1.11-fpm-alpine3.4
@@ -134,23 +138,25 @@ COMPOSER_VERSION = 2.8.9
 # build-8-1-12-rootless: PHPVER=8.1.12-fpm-alpine3.16
 # build-8-1-12-rootless: build-rootless-template
 
-build-8-1-10: PHPVER=8.1.10-fpm-alpine3.16
-build-8-1-10: build-template
+# PHP 8.1 reached end of life on 2025-12-31; targets kept commented for reference.
+# build-8-1-10: PHPVER=8.1.10-fpm-alpine3.16
+# build-8-1-10: build-template
+#
+# build-8-1-10-rootless: PHPVER=8.1.10-fpm-alpine3.16
+# build-8-1-10-rootless: build-rootless-template
+#
+# build-8-1-16: PHPVER=8.1.16-fpm-alpine3.16
+# build-8-1-16: build-template
+#
+# build-8-1-16-rootless: PHPVER=8.1.16-fpm-alpine3.16
+# build-8-1-16-rootless: build-rootless-template
 
-build-8-1-10-rootless: PHPVER=8.1.10-fpm-alpine3.16
-build-8-1-10-rootless: build-rootless-template
-
-build-8-1-16: PHPVER=8.1.16-fpm-alpine3.16
-build-8-1-16: build-template
-
-build-8-1-16-rootless: PHPVER=8.1.16-fpm-alpine3.16
-build-8-1-16-rootless: build-rootless-template
-
-build-8-2-3: PHPVER=8.2.3-fpm-alpine3.16
-build-8-2-3: build-template
-
-build-8-2-3-rootless: PHPVER=8.2.3-fpm-alpine3.16
-build-8-2-3-rootless: build-rootless-template
+# PHP 8.2 images retired; targets kept commented for reference.
+# build-8-2-3: PHPVER=8.2.3-fpm-alpine3.16
+# build-8-2-3: build-template
+#
+# build-8-2-3-rootless: PHPVER=8.2.3-fpm-alpine3.16
+# build-8-2-3-rootless: build-rootless-template
 
 build-8-3-2: PHPVER=8.3.2-fpm-alpine3.18
 build-8-3-2: build-template
@@ -176,6 +182,12 @@ build-8-4-22: build-template
 build-8-4-22-rootless: PHPVER=8.4.22-fpm-alpine3.24
 build-8-4-22-rootless: build-rootless-template
 
+build-8-5-7: PHPVER=8.5.7-fpm-alpine3.24
+build-8-5-7: build-template
+
+build-8-5-7-rootless: PHPVER=8.5.7-fpm-alpine3.24
+build-8-5-7-rootless: build-rootless-template
+
 build-template: guessing-folder build-test-image
 	docker buildx build \
 		--load \
@@ -183,6 +195,7 @@ build-template: guessing-folder build-test-image
 		--target dist \
 		-t sparkfabrik/docker-php-base-image:$(PHPVER) \
 		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(BUILDX_CACHE) \
 		$(shell ./scripts/guess_folder.sh "$(PHPVER)")
 	docker buildx build \
 		--load \
@@ -191,6 +204,7 @@ build-template: guessing-folder build-test-image
 		--target dev \
 		-t sparkfabrik/docker-php-base-image:$(PHPVER)-dev \
 		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(BUILDX_CACHE) \
 		$(shell ./scripts/guess_folder.sh "$(PHPVER)")
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:$(PHPVER) root
 
@@ -202,6 +216,7 @@ build-rootless-template: guessing-folder build-test-image
 		--target dist \
 		-t sparkfabrik/docker-php-base-image:$(PHPVER)-rootless \
 		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(BUILDX_CACHE) \
 		$(shell ./scripts/guess_folder.sh "$(PHPVER)")
 	docker buildx build \
 		--load \
@@ -211,6 +226,7 @@ build-rootless-template: guessing-folder build-test-image
 		--target dev \
 		-t sparkfabrik/docker-php-base-image:$(PHPVER)-rootless-dev \
 		--progress=$${DOCKER_BUILD_PROGRESS:-auto} \
+		$(BUILDX_CACHE) \
 		$(shell ./scripts/guess_folder.sh "$(PHPVER)")
 	./tests/tests_wrapper.sh php7 sparkfabrik/docker-php-base-image:$(PHPVER)-rootless "unknown uid 1001"
 
