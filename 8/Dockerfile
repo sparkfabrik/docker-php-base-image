@@ -88,11 +88,12 @@ COPY conf/*.ini /usr/local/etc/php/conf.d/
 COPY conf.disabled /usr/local/etc/php/conf.disabled
 COPY fpm-conf-templates/ /templates/
 
-# Enable OPcache as a Zend extension only when the parent image hasn't already
-# (older php:8.x parents don't ship docker-php-ext-opcache.ini) and it ships as
-# a shared object. Newer parents (PHP 8.4.22+) and static builds (PHP 8.5)
-# already load it, so the guard avoids the "Cannot load Zend OPcache - it was
-# already loaded" double-load while keeping OPcache enabled everywhere.
+# Enable OPcache as a Zend extension only when the parent image has not already
+# done so. The official php image enables OPcache by default (ships
+# docker-php-ext-opcache.ini) since docker-library/php#1587; parents built
+# before that, and any without the shared opcache.so, still need the manual
+# loader. Keying off the ini file keeps OPcache enabled everywhere while
+# avoiding the "Cannot load Zend OPcache - it was already loaded" double-load.
 RUN if [ ! -f /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini ] \
         && [ -f "$(php -r 'echo ini_get("extension_dir");')/opcache.so" ]; then \
         echo "zend_extension=opcache.so" > /usr/local/etc/php/conf.d/00-opcache-load.ini; \
