@@ -34,24 +34,32 @@ jobs:
 
   test:
     needs: prepare
-    runs-on: ubuntu-latest
-    name: test ${{ matrix.tag.full }}${{ matrix.flavour }}
+    runs-on: ${{ matrix.platform.runner }}
+    name: test ${{ matrix.tag.full }}${{ matrix.flavour }} (${{ matrix.platform.arch }})
     strategy:
+      fail-fast: false
       matrix:
         tag: ${{ fromJSON(needs.prepare.outputs.tags) }}
         flavour: ["", "-rootless"]
+        platform:
+          - name: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - name: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
     steps:
       - uses: actions/checkout@v6
 
-      # The test job builds a single native (amd64) image with --load, so it
-      # does not need QEMU. Skipping it avoids the parallel binfmt cache race
-      # and speeds up the job setup.
+      # Each runner builds, loads and executes its native platform image, so the
+      # test job does not need QEMU.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
       - name: Build and test the image
         env:
-          SCOPE: ${{ matrix.tag.full }}${{ matrix.flavour }}
+          DOCKER_DEFAULT_PLATFORM: ${{ matrix.platform.name }}
+          SCOPE: ${{ matrix.tag.full }}${{ matrix.flavour }}-${{ matrix.platform.arch }}
         run: |
           make build-${{ matrix.tag.short }}${{ matrix.flavour }} \
             BUILDX_CACHE="--cache-from type=gha,scope=${SCOPE} --cache-to type=gha,mode=max,scope=${SCOPE}"
