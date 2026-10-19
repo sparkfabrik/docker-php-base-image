@@ -38,6 +38,11 @@ The entrypoint file contains a list of environment variables that will be replac
 - `PHP_OPCACHE_ENABLE`: enable the opcode cache (default `1`)
 - `PHP_OPCACHE_MEMORY`: the size of the shared memory storage used by OPcache, in megabytes (default `64`)
 
+### PHP-FPM pool configuration
+
+- `PHP_FPM_REQUEST_TERMINATE_TIMEOUT`: wall-clock time after which a worker serving a single request is killed, e.g. `60s` (default `0`, disabled)
+- `PHP_FPM_REQUEST_SLOWLOG_TIMEOUT`: wall-clock time after which the PHP backtrace of a request is written to the container stderr, e.g. `10s` (default `0`, disabled). The root flavour needs the `SYS_PTRACE` capability to write the backtrace, because the FPM master runs as root and the workers as `www-data`; without it FPM logs `failed to ptrace(ATTACH) child` and only the slow-request warning. The rootless flavour needs no extra capability.
+
 ### Services
 
 - `REDIS_ENABLE`: enable redis extension (default `0`)
