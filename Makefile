@@ -158,23 +158,32 @@ BUILDX_CACHE ?=
 # build-8-2-3-rootless: PHPVER=8.2.3-fpm-alpine3.16
 # build-8-2-3-rootless: build-rootless-template
 
-build-8-3-2: PHPVER=8.3.2-fpm-alpine3.18
-build-8-3-2: build-template
+# PHP 8.3.2 image retired; targets kept commented for reference.
+# build-8-3-2: PHPVER=8.3.2-fpm-alpine3.18
+# build-8-3-2: build-template
+#
+# build-8-3-2-rootless: PHPVER=8.3.2-fpm-alpine3.18
+# build-8-3-2-rootless: build-rootless-template
 
-build-8-3-2-rootless: PHPVER=8.3.2-fpm-alpine3.18
-build-8-3-2-rootless: build-rootless-template
+# PHP 8.4.2 image retired; targets kept commented for reference.
+# build-8-4-2: PHPVER=8.4.2-fpm-alpine3.21
+# build-8-4-2: build-template
+#
+# build-8-4-2-rootless: PHPVER=8.4.2-fpm-alpine3.21
+# build-8-4-2-rootless: build-rootless-template
 
-build-8-3-15: PHPVER=8.3.15-fpm-alpine3.21
-build-8-3-15: build-template
+# PHP 8.3.15 image retired; targets kept commented for reference.
+# build-8-3-15: PHPVER=8.3.15-fpm-alpine3.21
+# build-8-3-15: build-template
+#
+# build-8-3-15-rootless: PHPVER=8.3.15-fpm-alpine3.21
+# build-8-3-15-rootless: build-rootless-template
 
-build-8-3-15-rootless: PHPVER=8.3.15-fpm-alpine3.21
-build-8-3-15-rootless: build-rootless-template
+build-8-3-36: PHPVER=8.3.36-fpm-alpine3.24
+build-8-3-36: build-template
 
-build-8-4-2: PHPVER=8.4.2-fpm-alpine3.21
-build-8-4-2: build-template
-
-build-8-4-2-rootless: PHPVER=8.4.2-fpm-alpine3.21
-build-8-4-2-rootless: build-rootless-template
+build-8-3-36-rootless: PHPVER=8.3.36-fpm-alpine3.24
+build-8-3-36-rootless: build-rootless-template
 
 build-8-4-22: PHPVER=8.4.22-fpm-alpine3.24
 build-8-4-22: build-template
@@ -182,11 +191,23 @@ build-8-4-22: build-template
 build-8-4-22-rootless: PHPVER=8.4.22-fpm-alpine3.24
 build-8-4-22-rootless: build-rootless-template
 
+build-8-4-27: PHPVER=8.4.27-fpm-alpine3.24
+build-8-4-27: build-template
+
+build-8-4-27-rootless: PHPVER=8.4.27-fpm-alpine3.24
+build-8-4-27-rootless: build-rootless-template
+
 build-8-5-7: PHPVER=8.5.7-fpm-alpine3.24
 build-8-5-7: build-template
 
 build-8-5-7-rootless: PHPVER=8.5.7-fpm-alpine3.24
 build-8-5-7-rootless: build-rootless-template
+
+build-8-5-12: PHPVER=8.5.12-fpm-alpine3.24
+build-8-5-12: build-template
+
+build-8-5-12-rootless: PHPVER=8.5.12-fpm-alpine3.24
+build-8-5-12-rootless: build-rootless-template
 
 build-template: guessing-folder build-test-image
 	docker buildx build \
