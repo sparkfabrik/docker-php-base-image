@@ -39,7 +39,10 @@ ENV PHP_FPM_PM_STATUS_PATH=/status
 ENV XDEBUG_VERSION=3.5.3
 ENV MEMCACHE_VERSION=3.4.0
 ENV PHPREDIS_VERSION=6.3.0
-RUN export XDEBUG_DEPS="linux-headers" && \
+# pecl.php.net intermittently answers downloads with HTTP 5xx, so retry each
+# install with a growing back-off instead of failing the whole build.
+RUN pecl_install() { n=0; until pecl install "$@"; do n=$((n + 1)); [ "$n" -ge 5 ] && return 1; sleep $((n * 15)); done; } && \
+    export XDEBUG_DEPS="linux-headers" && \
     export PHP_EXTRA_DEPS="libxml2-dev icu-dev libmemcached-dev cyrus-sasl-dev libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev libzip-dev oniguruma-dev libwebp-dev libldap openldap-dev openssl-dev" && \
     apk update && \
     apk add ${PHP_EXTRA_DEPS} ${PHPIZE_DEPS} ${XDEBUG_DEPS} gettext && \
@@ -52,16 +55,18 @@ RUN export XDEBUG_DEPS="linux-headers" && \
         docker-php-ext-configure ftp --with-ftp-ssl; \
     fi && \
     docker-php-ext-install bcmath gd intl mbstring pcntl pdo pdo_mysql soap zip ldap ftp && \
-    pecl install xdebug-${XDEBUG_VERSION} && \
-    pecl install redis-${PHPREDIS_VERSION} && \
-    pecl install igbinary memcached-${MEMCACHE_VERSION} --disable-memcached-sasl && \
+    pecl_install xdebug-${XDEBUG_VERSION} && \
+    pecl_install redis-${PHPREDIS_VERSION} && \
+    pecl_install igbinary && \
+    pecl_install memcached-${MEMCACHE_VERSION} --disable-memcached-sasl && \
     apk del ${PHPIZE_DEPS} ${XDEBUG_DEPS} && \
     rm -rf /var/cache/apk/*
 
 # Install APCu.
 ENV APCU_VERSION=5.1.28
-RUN apk add --no-cache --virtual .phpize-deps-configure $PHPIZE_DEPS && \
-    pecl install apcu-${APCU_VERSION} && \
+RUN pecl_install() { n=0; until pecl install "$@"; do n=$((n + 1)); [ "$n" -ge 5 ] && return 1; sleep $((n * 15)); done; } && \
+    apk add --no-cache --virtual .phpize-deps-configure $PHPIZE_DEPS && \
+    pecl_install apcu-${APCU_VERSION} && \
     apk del .phpize-deps-configure
 
 # Install blackfire client.
