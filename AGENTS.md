@@ -17,7 +17,7 @@ The current major is PHP 8, but treat that as a fact to be re-read, not hardcode
 
 ### Layout
 
-- One shared build folder per active major (currently `8/`): `Dockerfile`, `docker-entrypoint.sh`, `conf/` (active php.ini fragments), `conf.disabled/` (opt-in extensions), `fpm-conf-templates/`.
+- One shared build folder per active major (currently `8/`): `Dockerfile`, `docker-entrypoint.sh`, `conf/` (active php.ini fragments), `conf.disabled/` (opt-in extensions), `fpm-conf-templates/`, `php-source/` (tarball sha256s, release manager GPG keys, and the docker-php-* helpers vendored from docker-library/php).
 - `scripts/guess_folder.sh` — resolves a `PHPVER` to its folder, falling back full → `major.minor` → `major`, so every minor/patch of a major reuses that major's one folder.
 - `tests/` — image end-to-end checks (`image_verify.sh`, `tests_wrapper.sh`, `expectations/`).
 - `shellcheck/` — dockerized ShellCheck for `make shellcheck`.
@@ -57,6 +57,8 @@ Both architectures are non-negotiable and built natively (amd64 on `ubuntu-lates
 
 ### Build and runtime
 
+- PHP is compiled from the php.net tarball in the `php` stage, which mirrors the docker-library/php Alpine FPM Dockerfile; `PHPVER` selects the Alpine release and the PHP version. A new version needs its tarball line in `php-source/sha256sums` (and its minor's keys in `php-source/gpg-keys`), or the build fails. Never skip the sha256 or GPG check.
+- PECL extensions are built from their GitHub release tags, each pinned by sha256 in the Dockerfile, so the build does not depend on pecl.php.net.
 - Two targets: `dist` (runtime) and `dev` (`FROM dist` plus Composer, git, rsync, patch).
 - Opt-in extensions (`redis`, `memcached`, `xdebug`, `ldap`) ship installed but disabled; the entrypoint enables them from `conf.disabled/` via `*_ENABLE` env vars. Others (`apcu`, `igbinary`, …) are on by default.
 - OPcache loading is version-aware: write the `zend_extension=opcache.so` loader only when that shared object exists (newer PHP compiles OPcache in statically). Keep the logic conditional in the Dockerfile; `conf/opcache.ini` holds tuning only.
@@ -85,10 +87,12 @@ Before bumping any pin:
 2. Verify against it:
 
 ```bash
-# PHP image tags (Docker Hub) — set name= to the line you target
-curl -s "https://hub.docker.com/v2/repositories/library/php/tags/?page_size=100&name=<x.y>" | grep -oE '"name":"[^"]*fpm-alpine[0-9.]*"' | sort -u
+# PHP release tarball sha256 (php.net) — for php-source/sha256sums
+curl -s "https://www.php.net/releases/index.php?json=1&version=<x.y.z>" | jq -r '.source[] | select(.filename|endswith(".tar.xz")) | .sha256'
 # PECL release (xdebug/redis/memcached/apcu/igbinary)
 curl -s "https://pecl.php.net/rest/r/<ext>/allreleases.xml" | grep -oE '<v>[0-9.]+</v>' | head
+# Matching GitHub tag archive sha256 (the Dockerfile builds from these)
+curl -fsSL "https://github.com/<owner>/<repo>/archive/refs/tags/<tag>.tar.gz" | shasum -a 256
 # Composer / golang / Blackfire CLI
 curl -s https://getcomposer.org/versions | jq '.stable[0]'
 curl -s "https://hub.docker.com/v2/repositories/library/golang/tags/?page_size=100&name=alpine" | grep -oE '"name":"[0-9.]+-alpine3\.[0-9]+"' | sort -V | tail
