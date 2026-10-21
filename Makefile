@@ -172,11 +172,12 @@ BUILDX_CACHE ?=
 # build-8-4-2-rootless: PHPVER=8.4.2-fpm-alpine3.21
 # build-8-4-2-rootless: build-rootless-template
 
-build-8-3-15: PHPVER=8.3.15-fpm-alpine3.21
-build-8-3-15: build-template
-
-build-8-3-15-rootless: PHPVER=8.3.15-fpm-alpine3.21
-build-8-3-15-rootless: build-rootless-template
+# PHP 8.3.15 image retired; targets kept commented for reference.
+# build-8-3-15: PHPVER=8.3.15-fpm-alpine3.21
+# build-8-3-15: build-template
+#
+# build-8-3-15-rootless: PHPVER=8.3.15-fpm-alpine3.21
+# build-8-3-15-rootless: build-rootless-template
 
 build-8-3-36: PHPVER=8.3.36-fpm-alpine3.24
 build-8-3-36: build-template
