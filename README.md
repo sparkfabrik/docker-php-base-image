@@ -37,6 +37,7 @@ The entrypoint file contains a list of environment variables that will be replac
 - `PHP_TIMEZONE`: timezone used by all date/time functions in a script (default `Europe/Rome`)
 - `PHP_OPCACHE_ENABLE`: enable the opcode cache (default `1`)
 - `PHP_OPCACHE_MEMORY`: the size of the shared memory storage used by OPcache, in megabytes (default `64`)
+- `PHP_SESSION_UPLOAD_PROGRESS_ENABLED`: enable the native session upload progress tracking, `session.upload_progress.enabled` (default `0`)
 
 ### Services
 
