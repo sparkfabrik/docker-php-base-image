@@ -342,6 +342,9 @@ ENV PHP_FPM_PM_STATUS_PATH=/status
 ENV XDEBUG_VERSION=3.5.3
 ENV MEMCACHE_VERSION=3.4.0
 ENV PHPREDIS_VERSION=6.3.0
+# The version the unpinned `pecl install igbinary` already installed on every
+# image. 3.2.16, the latest non-RC release, does not build on PHP 8.5.
+ENV IGBINARY_VERSION=3.2.17RC1
 ENV APCU_VERSION=5.1.28
 # PECL extensions are built from their upstream GitHub release tags, not from
 # pecl.php.net. Each archive is pinned by sha256: update the checksum together
@@ -373,15 +376,8 @@ RUN ext_build() { \
         954e56021668121ecc50b92d2ad1ce945f22ecf81ffc5bb5835219485b12ef5f && \
     ext_build redis "https://github.com/phpredis/phpredis/archive/refs/tags/${PHPREDIS_VERSION}.tar.gz" \
         cb8f81df1a275599e4f8ddcfec7e1f65ed1953e6f5673649149fd680ebff4cad && \
-    # igbinary 3.2.16, the latest stable release, does not build on PHP 8.5, so
-    # 8.5 uses 3.2.17RC1 (the version pecl installed there before).
-    if php -r 'exit(version_compare(PHP_VERSION, "8.5", "<") ? 0 : 1);'; then \
-        ext_build igbinary "https://github.com/igbinary/igbinary/archive/refs/tags/3.2.16.tar.gz" \
-            941f1cf2ccbecdc1c221dbfae9213439d334be5d490a2f3da2be31e8a00b0cdb; \
-    else \
-        ext_build igbinary "https://github.com/igbinary/igbinary/archive/refs/tags/3.2.17RC1.tar.gz" \
-            d563482bd3f623a08bd38ecab1da69e2f8c0f87a781f8b395dd0a95c9959d6e4; \
-    fi && \
+    ext_build igbinary "https://github.com/igbinary/igbinary/archive/refs/tags/${IGBINARY_VERSION}.tar.gz" \
+        d563482bd3f623a08bd38ecab1da69e2f8c0f87a781f8b395dd0a95c9959d6e4 && \
     # pecl ignored --disable-memcached-sasl, so the images have always shipped
     # memcached with SASL support; the configure defaults keep it that way.
     ext_build memcached "https://github.com/php-memcached-dev/php-memcached/archive/refs/tags/v${MEMCACHE_VERSION}.tar.gz" \
