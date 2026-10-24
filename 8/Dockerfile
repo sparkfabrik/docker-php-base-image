@@ -12,7 +12,8 @@ RUN apk add git && \
 # image, so a new PHP release does not wait for the official image on every
 # architecture. This stage mirrors the docker-library/php Alpine FPM image
 # (8.x/alpine3.24/fpm/Dockerfile at e3eaff845f7a9f7259c31da54dce0320b47a3bbd);
-# the docker-php-* helpers in php-source/ are copied verbatim from it.
+# the docker-php-* helpers in php-source/ are copied verbatim from it. Both are
+# MIT licensed by Docker, Inc.: see php-source/LICENSE.
 # PHPVER (<version>-fpm-alpine<alpine>) selects both the Alpine release and the
 # PHP version. Each version needs its tarball sha256 in php-source/sha256sums;
 # each minor needs its release manager key fingerprints in php-source/gpg-keys
