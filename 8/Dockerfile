@@ -17,7 +17,7 @@ RUN apk add git && \
 # PHP version. Each version needs its tarball sha256 in php-source/sha256sums;
 # each minor needs its release manager key fingerprints in php-source/gpg-keys
 # and the matching public keys in php-source/gpg/<major.minor>.asc.
-FROM alpine:${PHPVER##*-alpine} AS php
+FROM alpine:${PHPVER##*-alpine} AS php-build
 
 ARG PHPVER
 
@@ -309,7 +309,9 @@ STOPSIGNAL SIGQUIT
 EXPOSE 9000
 CMD ["php-fpm"]
 
-FROM php AS dist
+# Not named "php": if that stage disappeared, FROM php would silently pull the
+# Docker Hub image instead of failing.
+FROM php-build AS dist
 
 # Build target arch passed by BuildKit
 ARG TARGETARCH

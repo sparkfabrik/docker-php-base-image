@@ -57,7 +57,7 @@ Both architectures are non-negotiable and built natively (amd64 on `ubuntu-lates
 
 ### Build and runtime
 
-- PHP is compiled from the php.net tarball in the `php` stage, which mirrors the docker-library/php Alpine FPM Dockerfile; `PHPVER` selects the Alpine release and the PHP version. A new version needs its tarball line in `php-source/sha256sums` (and a new minor needs its release manager fingerprints in `php-source/gpg-keys` plus the public keys in `php-source/gpg/<x.y>.asc`), or the build fails. Never skip the sha256 or GPG check.
+- PHP is compiled from the php.net tarball in the `php-build` stage, which mirrors the docker-library/php Alpine FPM Dockerfile; `PHPVER` selects the Alpine release and the PHP version. A new version needs its tarball line in `php-source/sha256sums` (and a new minor needs its release manager fingerprints in `php-source/gpg-keys` plus the public keys in `php-source/gpg/<x.y>.asc`), or the build fails. Never skip the sha256 or GPG check.
 - PECL extensions are built from their GitHub release tags, each pinned by sha256 in the Dockerfile, so the build does not depend on pecl.php.net.
 - Two targets: `dist` (runtime) and `dev` (`FROM dist` plus Composer, git, rsync, patch).
 - Opt-in extensions (`redis`, `memcached`, `xdebug`, `ldap`) ship installed but disabled; the entrypoint enables them from `conf.disabled/` via `*_ENABLE` env vars. Others (`apcu`, `igbinary`, …) are on by default.
