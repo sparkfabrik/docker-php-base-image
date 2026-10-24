@@ -14,8 +14,9 @@ RUN apk add git && \
 # (8.x/alpine3.24/fpm/Dockerfile at e3eaff845f7a9f7259c31da54dce0320b47a3bbd);
 # the docker-php-* helpers in php-source/ are copied verbatim from it.
 # PHPVER (<version>-fpm-alpine<alpine>) selects both the Alpine release and the
-# PHP version. Each version needs its tarball sha256 in php-source/sha256sums
-# and its release manager keys in php-source/gpg-keys.
+# PHP version. Each version needs its tarball sha256 in php-source/sha256sums;
+# each minor needs its release manager key fingerprints in php-source/gpg-keys
+# and the matching public keys in php-source/gpg/<major.minor>.asc.
 FROM alpine:${PHPVER##*-alpine} AS php
 
 ARG PHPVER
@@ -85,8 +86,9 @@ RUN --mount=type=bind,source=php-source,target=/tmp/php-source \
 	esac; \
 	PHP_SHA256="$(awk -v f="php-${PHP_VERSION}.tar.xz" '$2 == f { print $1 }' /tmp/php-source/sha256sums)"; \
 	GPG_KEYS="$(awk -v m="${PHP_VERSION%.*}" '$1 == m { $1 = ""; print }' /tmp/php-source/gpg-keys)"; \
-	if [ -z "$PHP_SHA256" ] || [ -z "$GPG_KEYS" ]; then \
-		echo >&2 "error: php-source/ has no sha256 or GPG keys for PHP $PHP_VERSION"; \
+	GPG_KEYRING="/tmp/php-source/gpg/${PHP_VERSION%.*}.asc"; \
+	if [ -z "$PHP_SHA256" ] || [ -z "$GPG_KEYS" ] || [ ! -f "$GPG_KEYRING" ]; then \
+		echo >&2 "error: php-source/ has no sha256, GPG fingerprints or GPG keys for PHP $PHP_VERSION"; \
 		exit 1; \
 	fi; \
 	\
@@ -101,10 +103,14 @@ RUN --mount=type=bind,source=php-source,target=/tmp/php-source \
 	\
 	curl -fsSL -o php.tar.xz.asc "$PHP_ASC_URL"; \
 	export GNUPGHOME="$(mktemp -d)"; \
-	for key in $GPG_KEYS; do \
-		gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key"; \
-	done; \
-	gpg --batch --verify php.tar.xz.asc php.tar.xz; \
+# import the committed public keys instead of fetching them from a keyserver,
+# then accept the signature only if its primary key is a pinned fingerprint
+	gpg --batch --import "$GPG_KEYRING"; \
+	signer="$(gpg --batch --status-fd 1 --verify php.tar.xz.asc php.tar.xz | awk '$2 == "VALIDSIG" { print $NF }')"; \
+	if [ -z "$signer" ] || ! echo " $GPG_KEYS " | grep -q " $signer "; then \
+		echo >&2 "error: php.tar.xz has no valid signature from a key in php-source/gpg-keys (signer: '$signer')"; \
+		exit 1; \
+	fi; \
 	gpgconf --kill all; \
 	rm -rf "$GNUPGHOME"; \
 	\
