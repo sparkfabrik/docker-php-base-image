@@ -61,7 +61,7 @@ Both architectures are non-negotiable and built natively (amd64 on `ubuntu-lates
 - PECL extensions are built from their GitHub release tags, each pinned by sha256 in the Dockerfile, so the build does not depend on pecl.php.net.
 - Two targets: `dist` (runtime) and `dev` (`FROM dist` plus Composer, git, rsync, patch).
 - Opt-in extensions (`redis`, `memcached`, `xdebug`, `ldap`) ship installed but disabled; the entrypoint enables them from `conf.disabled/` via `*_ENABLE` env vars. Others (`apcu`, `igbinary`, …) are on by default.
-- OPcache loading is version-aware: write the `zend_extension=opcache.so` loader only when that shared object exists (newer PHP compiles OPcache in statically). Keep the logic conditional in the Dockerfile; `conf/opcache.ini` holds tuning only.
+- OPcache loading is version-aware: the PHP build stage runs `docker-php-ext-enable opcache` only when `opcache.so` exists (newer PHP compiles OPcache in statically). Keep the logic conditional in the Dockerfile; `conf/opcache.ini` holds tuning only.
 
 ## Code Style
 
