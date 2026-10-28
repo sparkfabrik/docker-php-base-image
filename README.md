@@ -8,6 +8,7 @@
 - bcmath
 - ftp
 - gd
+- grpc (not activated by default, see [gRPC](#grpc))
 - igbinary
 - intl
 - ldap (not activated by default)
@@ -56,6 +57,23 @@ The entrypoint file contains a list of environment variables that will be replac
 
 - `MAILHOG_HOST`: mailhog smtp address (default `mail`)
 - `MAILHOG_PORT`: mailhog smtp port (default `1025`)
+
+## gRPC
+
+The `grpc` extension (needed, for example, by the Google Cloud Firestore SDK) is installed but not loaded, and has no `*_ENABLE` variable. A downstream image loads it with an ini file in `/usr/local/etc/php/conf.d/`:
+
+```ini
+extension=grpc
+```
+
+Loading it from an ini file, instead of from the entrypoint, also works for containers that override the entrypoint, such as Kubernetes Jobs with a `command`.
+
+Its defaults are in `conf.d/grpc.ini`:
+
+- `grpc.enable_fork_support=1`: a child forked after the parent opened a gRPC channel fails with an exception instead of hanging on a gRPC lock (fork before opening a channel).
+- `grpc.poll_strategy=epoll1`: fork support needs `epoll1` or `poll`.
+
+To change them, or set any other value, use an ini file of your own. PHP reads `conf.d` in alphabetical order and the last value wins, so name it to sort after `grpc.ini` (for example `zz-project.ini`).
 
 ## Rootless feature
 

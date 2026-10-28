@@ -32,7 +32,21 @@ if [ -n "${1}" ] && [ -d "${BASE}/expectations/${1}" ] && [ -n "${2}" ]; then
     "${2}"
 
   EXIT_STATUS=$?
-  exit $EXIT_STATUS
+
+  if [ $EXIT_STATUS -ne 0 ]; then
+    exit $EXIT_STATUS
+  fi
+
+  # gRPC ships disabled: check that an ini line loads it with its default settings.
+  if docker run --rm --entrypoint php "${2}" -d extension=grpc \
+    -r 'exit(extension_loaded("grpc") && ini_get("grpc.enable_fork_support") === "1" && ini_get("grpc.poll_strategy") === "epoll1" ? 0 : 1);'; then
+    echo "Testing that grpc loads when enabled: OK"
+  else
+    echo "Testing that grpc loads when enabled: FAIL"
+    exit 6
+  fi
+
+  exit 0
 fi
 
 exit 99

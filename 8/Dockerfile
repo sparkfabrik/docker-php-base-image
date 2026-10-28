@@ -71,6 +71,17 @@ RUN pecl_install() { n=0; until pecl install "$@"; do n=$((n + 1)); [ "$n" -ge 5
     pecl_install apcu-${APCU_VERSION} && \
     apk del .phpize-deps-configure
 
+# Install gRPC, shipped disabled: a downstream image turns it on with an ini
+# file containing `extension=grpc` (conf/grpc.ini holds its settings). Alpine's
+# package is built for the same PHP minor and ABI as the official image, so it
+# installs in seconds instead of a long pecl compile. apk fails the build if the
+# parent image's Alpine has no package for this PHP minor, and the final check
+# fails it if the extension cannot load.
+RUN phpminor=$(php -r 'echo PHP_MAJOR_VERSION.PHP_MINOR_VERSION;') && \
+    apk add --no-cache "php${phpminor}-pecl-grpc" && \
+    ln -s "/usr/lib/php${phpminor}/modules/grpc.so" "$(php -r 'echo ini_get("extension_dir");')/grpc.so" && \
+    php -d extension=grpc -r 'exit(extension_loaded("grpc") ? 0 : 1);'
+
 # Install blackfire client.
 ENV BLACKFIRE_CLIENT_VERSION=2026.6.0
 RUN mkdir -p /tmp/blackfire && \
