@@ -68,12 +68,12 @@ extension=grpc
 
 Loading it from an ini file, instead of from the entrypoint, also works for containers that override the entrypoint, such as Kubernetes Jobs with a `command`.
 
-Its defaults are in `conf.d/grpc.ini`:
+Its defaults are in `conf.d/00-grpc.ini`:
 
 - `grpc.enable_fork_support=1`: a child forked after the parent opened a gRPC channel fails with an exception instead of hanging on a gRPC lock (fork before opening a channel).
 - `grpc.poll_strategy=epoll1`: fork support needs `epoll1` or `poll`.
 
-To change them, or set any other value, use an ini file of your own. PHP reads `conf.d` in alphabetical order and the last value wins, so name it to sort after `grpc.ini` (for example `zz-project.ini`).
+To change them, or set any other value, use an ini file of your own. PHP reads `conf.d` in alphabetical order and the last value wins, and `00-grpc.ini` sorts first, so any other file overrides it, including the `docker-php-ext-grpc.ini` that `docker-php-ext-enable grpc` writes.
 
 ## Rootless feature
 

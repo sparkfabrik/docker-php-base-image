@@ -72,7 +72,7 @@ RUN pecl_install() { n=0; until pecl install "$@"; do n=$((n + 1)); [ "$n" -ge 5
     apk del .phpize-deps-configure
 
 # Install gRPC, shipped disabled: a downstream image turns it on with an ini
-# file containing `extension=grpc` (conf/grpc.ini holds its settings). Alpine's
+# file containing `extension=grpc` (conf/00-grpc.ini holds its settings). Alpine's
 # package is built for the same PHP minor and ABI as the official image, so it
 # installs in seconds instead of a long pecl compile. apk fails the build if the
 # parent image's Alpine has no package for this PHP minor, and the final check

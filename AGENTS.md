@@ -59,7 +59,7 @@ Both architectures are non-negotiable and built natively (amd64 on `ubuntu-lates
 
 - Two targets: `dist` (runtime) and `dev` (`FROM dist` plus Composer, git, rsync, patch).
 - Opt-in extensions (`redis`, `memcached`, `xdebug`, `ldap`) ship installed but disabled; the entrypoint enables them from `conf.disabled/` via `*_ENABLE` env vars. Others (`apcu`, `igbinary`, …) are on by default.
-- `grpc` is installed from Alpine's `php<major><minor>-pecl-grpc` package and loaded by no ini file: downstream images load it with `extension=grpc`, so it also works where the entrypoint is skipped. `conf/grpc.ini` holds fixed defaults; downstream ini files override them. Do not expose them through `${VAR:-default}`: PHP uses an empty-but-set variable literally, and an empty `grpc.poll_strategy` aborts every request.
+- `grpc` is installed from Alpine's `php<major><minor>-pecl-grpc` package and loaded by no ini file: downstream images load it with `extension=grpc`, so it also works where the entrypoint is skipped. `conf/00-grpc.ini` holds fixed defaults and sorts first in `conf.d`, so every downstream ini file overrides them, including `docker-php-ext-grpc.ini`. Do not expose them through `${VAR:-default}`: PHP uses an empty-but-set variable literally, and an empty `grpc.poll_strategy` aborts every request.
 - OPcache loading is version-aware: write the `zend_extension=opcache.so` loader only when that shared object exists (newer PHP compiles OPcache in statically). Keep the logic conditional in the Dockerfile; `conf/opcache.ini` holds tuning only.
 
 ## Code Style
@@ -78,7 +78,7 @@ Both architectures are non-negotiable and built natively (amd64 on `ubuntu-lates
 
 ## Dependencies and Version Pinning
 
-Versions are pinned (no lockfile), except `grpc`, which follows Alpine's `php8x-pecl-grpc` package for the parent image's Alpine (check with `apk info php8x-pecl-grpc`): PHP extensions/tools and the golang builder in the Dockerfile, plus `COMPOSER_VERSION` in both the `Makefile` and `docker-publish.yml` (keep them in sync).
+Versions are pinned (no lockfile): PHP extensions/tools and the golang builder in the Dockerfile, plus `COMPOSER_VERSION` in both the `Makefile` and `docker-publish.yml` (keep them in sync). The exception is `grpc`, which follows Alpine's `php8x-pecl-grpc` package for the parent image's Alpine (check with `apk info php8x-pecl-grpc`).
 
 Before bumping any pin:
 
