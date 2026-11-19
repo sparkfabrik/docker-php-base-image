@@ -185,6 +185,12 @@ build-8-3-36: build-template
 build-8-3-36-rootless: PHPVER=8.3.36-fpm-alpine3.24
 build-8-3-36-rootless: build-rootless-template
 
+build-8-3-37: PHPVER=8.3.37-fpm-alpine3.24
+build-8-3-37: build-template
+
+build-8-3-37-rootless: PHPVER=8.3.37-fpm-alpine3.24
+build-8-3-37-rootless: build-rootless-template
+
 build-8-4-22: PHPVER=8.4.22-fpm-alpine3.24
 build-8-4-22: build-template
 
@@ -197,6 +203,12 @@ build-8-4-27: build-template
 build-8-4-27-rootless: PHPVER=8.4.27-fpm-alpine3.24
 build-8-4-27-rootless: build-rootless-template
 
+build-8-4-28: PHPVER=8.4.28-fpm-alpine3.24
+build-8-4-28: build-template
+
+build-8-4-28-rootless: PHPVER=8.4.28-fpm-alpine3.24
+build-8-4-28-rootless: build-rootless-template
+
 build-8-5-7: PHPVER=8.5.7-fpm-alpine3.24
 build-8-5-7: build-template
 
@@ -208,6 +220,12 @@ build-8-5-12: build-template
 
 build-8-5-12-rootless: PHPVER=8.5.12-fpm-alpine3.24
 build-8-5-12-rootless: build-rootless-template
+
+build-8-5-13: PHPVER=8.5.13-fpm-alpine3.24
+build-8-5-13: build-template
+
+build-8-5-13-rootless: PHPVER=8.5.13-fpm-alpine3.24
+build-8-5-13-rootless: build-rootless-template
 
 build-template: guessing-folder build-test-image
 	docker buildx build \
