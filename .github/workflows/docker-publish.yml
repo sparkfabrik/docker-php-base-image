@@ -13,10 +13,13 @@ env:
   PHP_TAGS: >-
     [
       {"short":"8-3-36","full":"8.3.36-fpm-alpine3.24"},
+      {"short":"8-3-37","full":"8.3.37-fpm-alpine3.24"},
       {"short":"8-4-22","full":"8.4.22-fpm-alpine3.24"},
       {"short":"8-4-27","full":"8.4.27-fpm-alpine3.24"},
+      {"short":"8-4-28","full":"8.4.28-fpm-alpine3.24"},
       {"short":"8-5-7","full":"8.5.7-fpm-alpine3.24"},
-      {"short":"8-5-12","full":"8.5.12-fpm-alpine3.24"}
+      {"short":"8-5-12","full":"8.5.12-fpm-alpine3.24"},
+      {"short":"8-5-13","full":"8.5.13-fpm-alpine3.24"}
     ]
 
 jobs:
