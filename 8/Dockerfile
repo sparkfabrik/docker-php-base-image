@@ -83,7 +83,7 @@ RUN phpminor=$(php -r 'echo PHP_MAJOR_VERSION.PHP_MINOR_VERSION;') && \
     php -d extension=grpc -r 'exit(extension_loaded("grpc") ? 0 : 1);'
 
 # Install blackfire client.
-ENV BLACKFIRE_CLIENT_VERSION=2026.6.0
+ENV BLACKFIRE_CLIENT_VERSION=2026.11.0
 RUN mkdir -p /tmp/blackfire && \
     curl -A "Docker" -L https://packages.blackfire.io/binaries/blackfire/${BLACKFIRE_CLIENT_VERSION}/blackfire-linux_${TARGETARCH}.tar.gz | tar zxp -C /tmp/blackfire && \
     mv /tmp/blackfire/blackfire /usr/bin/blackfire && \
